@@ -1176,21 +1176,44 @@ img {
 
 .paper-content p {
   margin: 0 0 14px;
-  font-size: 15.5px;
+  font-size: 17px;
   line-height: 1.95;
   color: rgba(10, 10, 10, 0.86);
 }
 
-.paper-content h2 {
-  margin: 18px 0 10px;
+.paper-content h1,
+.paper-content h2,
+.paper-content h3 {
   width: fit-content;
   background: linear-gradient(90deg, #cf1a0e 0%, #b30f07 78%, #131010 78%, #131010 100%);
   color: #fff;
-  font-size: 18px;
-  padding: 6px 20px 7px 12px;
   font-weight: 800;
   clip-path: polygon(0 0, 100% 0, 96% 100%, 0 100%);
   box-shadow: 2px 2px 0 #0d0909;
+}
+
+.paper-content h1 {
+  margin: 26px 0 14px;
+  padding: 8px 24px 9px 14px;
+  font-size: clamp(20px, 2.3vw, 28px);
+  line-height: 1.25;
+  font-weight: 900;
+}
+
+.paper-content h1:first-child {
+  margin-top: 4px;
+}
+
+.paper-content h2 {
+  margin: 18px 0 10px;
+  font-size: 18px;
+  padding: 6px 20px 7px 12px;
+}
+
+.paper-content h3 {
+  margin: 16px 0 8px;
+  font-size: 16px;
+  padding: 5px 18px 6px 10px;
 }
 
 .paper-content blockquote {
@@ -1205,11 +1228,12 @@ img {
 .paper-content blockquote p {
   color: rgba(255, 255, 255, 0.92);
   margin: 0;
-  font-size: 16.5px;
+  font-size: 17px;
   line-height: 1.8;
 }
 
-.paper-content ul {
+.paper-content ul,
+.paper-content ol {
   margin: 8px 0 16px;
   padding: 0;
   list-style: none;
@@ -1219,7 +1243,7 @@ img {
   margin: 0;
   padding: 3px 0 3px 20px;
   position: relative;
-  font-size: 15.5px;
+  font-size: 17px;
   line-height: 1.8;
   color: rgba(10, 10, 10, 0.86);
 }
