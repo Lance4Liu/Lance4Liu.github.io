@@ -1,7 +1,7 @@
 ---
 date: 2026-05-11
 title: 新增文章：AI 还没交出消费端的答卷
-type: content
+type: milestone
 status: done
 priority: low
 ---
