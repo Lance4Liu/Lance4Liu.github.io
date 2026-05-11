@@ -14,4 +14,15 @@ const posts = defineCollection({
   })
 });
 
-export const collections = { posts };
+const devlog = defineCollection({
+  type: 'content',
+  schema: z.object({
+    date: z.coerce.date(),
+    title: z.string(),
+    type: z.enum(['milestone', 'feature', 'fix', 'improvement']),
+    status: z.enum(['done', 'in-progress', 'planned']),
+    priority: z.enum(['high', 'medium', 'low']).optional(),
+  })
+});
+
+export const collections = { posts, devlog };
