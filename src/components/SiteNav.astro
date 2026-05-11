@@ -1,0 +1,90 @@
+---
+type NavKey = 'home' | 'about' | 'timeline' | 'guestbook';
+
+interface NavItem {
+  key: NavKey;
+  label: string;
+  href: string;
+}
+
+interface Props {
+  active?: NavKey | 'none';
+}
+
+const { active = 'none' } = Astro.props as Props;
+
+const navItems: NavItem[] = [
+  { key: 'home', label: '首页', href: '/' },
+  { key: 'about', label: '关于我', href: '/profile' },
+  { key: 'timeline', label: '时间轴', href: '/posts' },
+  { key: 'guestbook', label: '留言板', href: '/#guestbook' }
+];
+
+const iconPaths: Record<NavKey, string> = {
+  home: '<path d="M3 11.2L12 4l9 7.2"/><path d="M5 10.8V20h14v-9.2"/><path d="M9.5 20v-5.2h5V20"/>',
+  about:
+    '<circle cx="12" cy="8.2" r="3.2"/><path d="M5 19.5c1.3-3.6 4-5.4 7-5.4s5.7 1.8 7 5.4"/>',
+  timeline: '<circle cx="12" cy="12" r="8.8"/><path d="M12 7.2v5.2l3.8 2.1"/>',
+  guestbook:
+    '<rect x="4" y="5.5" width="16" height="11.5" rx="1.8"/><path d="M9 17v3.5l3.5-3.5"/><path d="M8 10h8M8 13h5.5"/>'
+};
+---
+
+<header class="top-nav" data-site-nav>
+  {
+    navItems.map((item) => {
+      const isActive = item.key === active;
+      return (
+        <a
+          href={item.href}
+          class:list={['top-nav-link', isActive && 'active']}
+          aria-current={isActive ? 'page' : undefined}
+        >
+          <svg class="top-nav-icon" viewBox="0 0 24 24" aria-hidden="true" set:html={iconPaths[item.key]} />
+          <span class="top-nav-label">{item.label}</span>
+        </a>
+      );
+    })
+  }
+</header>
+
+<script is:inline>
+  (() => {
+    const nav = document.querySelector('[data-site-nav]');
+    if (!nav) return;
+
+    const links = Array.from(nav.querySelectorAll('.top-nav-link'));
+    if (!links.length) return;
+
+    const clickSound = new Audio('/sounds/click.wav');
+    clickSound.preload = 'auto';
+    clickSound.volume = 0.8;
+
+    const playClick = () => {
+      try {
+        clickSound.currentTime = 0;
+        const promise = clickSound.play();
+        if (promise && typeof promise.catch === 'function') {
+          promise.catch(() => {});
+        }
+      } catch {}
+    };
+
+    links.forEach((link) => {
+      link.addEventListener('click', (event) => {
+        playClick();
+
+        const href = link.getAttribute('href');
+        const isPrimaryClick = event.button === 0;
+        const hasModifier = event.metaKey || event.ctrlKey || event.shiftKey || event.altKey;
+
+        if (!isPrimaryClick || hasModifier || !href || href.startsWith('#')) return;
+
+        event.preventDefault();
+        window.setTimeout(() => {
+          window.location.assign(href);
+        }, 80);
+      });
+    });
+  })();
+</script>

@@ -1,0 +1,207 @@
+---
+import BaseLayout from './BaseLayout.astro';
+import SiteNav from '../components/SiteNav.astro';
+
+interface CategoryItem {
+  key: 'tech' | 'product' | 'diary';
+  label: string;
+  count: number;
+  active?: boolean;
+}
+
+interface RecentItem {
+  title: string;
+  href: string;
+  date: string;
+  active?: boolean;
+}
+
+interface Props {
+  title: string;
+  categoryLabel: string;
+  date: string;
+  author: string;
+  readingTime: string;
+  pageTitle: string;
+  pageCn: string;
+  categories: CategoryItem[];
+  recentPosts: RecentItem[];
+}
+
+const {
+  title,
+  categoryLabel,
+  date,
+  author,
+  readingTime,
+  pageTitle,
+  pageCn,
+  categories,
+  recentPosts
+} = Astro.props as Props;
+---
+
+<BaseLayout title={`${title} · 小柳飞刀`} description={categoryLabel}>
+  <SiteNav active="timeline" />
+
+  <main class="article-scene">
+    <div class="article-grid">
+      <section class="article-center">
+        <div class="article-topline">
+          <a class="back-link" href="/posts">← BACK</a>
+          <span class="article-top-title">{pageTitle}</span>
+          <span class="article-top-cn">{pageCn}</span>
+        </div>
+
+        <article class="paper-card">
+          <div class="paper-star">☆</div>
+          <span class="paper-tag"><span>{categoryLabel}</span></span>
+          <h1 class="paper-title">{title}</h1>
+          <div class="paper-meta">
+            <span>◷ {date}</span>
+            <span>✦ {author}</span>
+            <span>▣ {categoryLabel}</span>
+            <span>⏱ {readingTime}</span>
+          </div>
+          <div class="paper-content">
+            <slot />
+          </div>
+        </article>
+      </section>
+
+      <aside class="article-right">
+        <section class="side-card">
+          <div class="side-label">
+            <span class="side-star">✶</span>
+            <span class="side-title">关于我</span>
+          </div>
+          <div class="about-avatar">
+            <img src="/images/bg/hero-bg.png" alt="avatar" />
+          </div>
+          <div class="about-name">小柳飞刀</div>
+          <div class="about-desc">以代码为刃，斩断无题的现实。</div>
+          <div class="side-social">
+            <a href="#" aria-label="GitHub">GitHub</a>
+            <a href="#" aria-label="X">X</a>
+            <a href="#" aria-label="Email">Email</a>
+          </div>
+        </section>
+
+        <section class="side-card">
+          <div class="side-label">
+            <span class="side-star">✶</span>
+            <span class="side-title">分类</span>
+          </div>
+          <div class="side-list">
+            {categories.map((item) => (
+              <div class="side-row">
+                <a href={`/posts?category=${item.key}`} class={item.active ? 'active' : undefined}>
+                  {item.active ? `▶ ${item.label}` : item.label}
+                </a>
+                <small>{item.count}</small>
+              </div>
+            ))}
+          </div>
+        </section>
+
+        <section class="side-card">
+          <div class="side-label">
+            <span class="side-star">✶</span>
+            <span class="side-title">最新文章</span>
+          </div>
+          <div class="side-list">
+            {recentPosts.map((item) => (
+              <div class="side-row">
+                <a href={item.href} class={item.active ? 'active' : undefined}>
+                  {item.active ? `› ${item.title}` : item.title}
+                </a>
+                <small>{item.date}</small>
+              </div>
+            ))}
+          </div>
+        </section>
+      </aside>
+    </div>
+  </main>
+
+  <footer class="site-footer">© 2026 小柳飞刀 · 用代码改变世界，用思考构建未来</footer>
+
+  <script is:inline>
+    (() => {
+      const rail = document.querySelector('.article-right');
+      if (!rail) return;
+      if (window.matchMedia('(prefers-reduced-motion: reduce)').matches) return;
+      if (window.matchMedia('(max-width: 980px)').matches) return;
+
+      let pull = 0;
+      let velocity = 0;
+      let rafId = 0;
+      const maxPull = 22;
+      const spring = 0.16;
+      const damping = 0.8;
+
+      const clamp = (value, min, max) => Math.min(max, Math.max(min, value));
+
+      const render = () => {
+        velocity += (0 - pull) * spring;
+        velocity *= damping;
+        pull = clamp(pull + velocity, -maxPull, maxPull);
+
+        if (Math.abs(pull) < 0.05 && Math.abs(velocity) < 0.05) {
+          pull = 0;
+          velocity = 0;
+          rail.style.transform = 'translate3d(0, 0, 0)';
+          rafId = 0;
+          return;
+        }
+
+        rail.style.transform = `translate3d(0, ${pull.toFixed(2)}px, 0)`;
+        rafId = window.requestAnimationFrame(render);
+      };
+
+      const onWheel = (event) => {
+        const delta = event.deltaY;
+        if (!Number.isFinite(delta) || delta === 0) return;
+
+        // Scroll down => content moves up, rail gets briefly pulled upward.
+        velocity = clamp(velocity - delta * 0.018, -maxPull, maxPull);
+
+        if (!rafId) rafId = window.requestAnimationFrame(render);
+      };
+
+      window.addEventListener('wheel', onWheel, { passive: true });
+    })();
+  </script>
+
+  <script is:inline>
+    (() => {
+      const backLink = document.querySelector('.back-link');
+      if (!backLink) return;
+
+      const clickSound = new Audio('/sounds/click.wav');
+      clickSound.preload = 'auto';
+      clickSound.volume = 0.8;
+
+      backLink.addEventListener('click', (event) => {
+        try {
+          clickSound.currentTime = 0;
+          const promise = clickSound.play();
+          if (promise && typeof promise.catch === 'function') {
+            promise.catch(() => {});
+          }
+        } catch {}
+
+        const href = backLink.getAttribute('href');
+        const isPrimaryClick = event.button === 0;
+        const hasModifier = event.metaKey || event.ctrlKey || event.shiftKey || event.altKey;
+
+        if (!isPrimaryClick || hasModifier || !href || href.startsWith('#')) return;
+
+        event.preventDefault();
+        window.setTimeout(() => {
+          window.location.assign(href);
+        }, 80);
+      });
+    })();
+  </script>
+</BaseLayout>

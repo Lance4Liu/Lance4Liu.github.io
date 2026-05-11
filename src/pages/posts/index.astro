@@ -1,0 +1,109 @@
+---
+import HomeLayout from '../../layouts/HomeLayout.astro';
+import { getCollection } from 'astro:content';
+
+const categoryLabels = {
+  all: '全部文章',
+  tech: '学习笔记',
+  product: '产品思考',
+  diary: '产品测评'
+} as const;
+
+const posts = (await getCollection('posts', ({ data }) => !data.draft)).sort(
+  (a, b) => b.data.date.getTime() - a.data.date.getTime()
+);
+
+const counts = {
+  tech: posts.filter((post) => post.data.category === 'tech').length,
+  product: posts.filter((post) => post.data.category === 'product').length,
+  diary: posts.filter((post) => post.data.category === 'diary').length
+};
+---
+
+<HomeLayout title="博客列表 · 小柳飞刀" navActive="timeline">
+  <main class="posts-page-wrap">
+    <h1 class="posts-heading">Posts</h1>
+    <p class="posts-intro">统一模板渲染，内容来自 Markdown。支持分类过滤与固定 URL 路由。</p>
+
+    <nav class="filter-row" aria-label="category filters">
+      <a class="filter-btn" data-filter="all" href="/posts?category=all">{categoryLabels.all} ({posts.length})</a>
+      <a class="filter-btn" data-filter="tech" href="/posts?category=tech">{categoryLabels.tech} ({counts.tech})</a>
+      <a class="filter-btn" data-filter="product" href="/posts?category=product">{categoryLabels.product} ({counts.product})</a>
+      <a class="filter-btn" data-filter="diary" href="/posts?category=diary">{categoryLabels.diary} ({counts.diary})</a>
+    </nav>
+
+    <section class="posts-list" id="posts-list">
+      {
+        posts.map((post) => (
+          <article class="post-card" data-category={post.data.category}>
+            <a href={`/posts/${post.data.category}/${post.slug}`}>
+              <span class="post-chip"><span>{categoryLabels[post.data.category]}</span></span>
+              <h2 class="post-title">{post.data.title}</h2>
+              <p class="post-summary">{post.data.summary}</p>
+              <div class="post-meta">
+                <span>{post.data.date.toISOString().slice(0, 10)}</span>
+                <span>{post.data.readingTime ?? '5 分钟阅读'}</span>
+              </div>
+            </a>
+          </article>
+        ))
+      }
+    </section>
+  </main>
+
+  <script is:inline>
+    (() => {
+      const cards = Array.from(document.querySelectorAll('[data-category]'));
+      const buttons = Array.from(document.querySelectorAll('[data-filter]'));
+      const articleLinks = Array.from(document.querySelectorAll('.post-card > a'));
+      const params = new URLSearchParams(window.location.search);
+      const initial = params.get('category') || 'all';
+
+      const clickSound = new Audio('/sounds/click.wav');
+      clickSound.preload = 'auto';
+      clickSound.volume = 0.8;
+
+      const playClick = () => {
+        try {
+          clickSound.currentTime = 0;
+          const promise = clickSound.play();
+          if (promise && typeof promise.catch === 'function') {
+            promise.catch(() => {});
+          }
+        } catch {}
+      };
+
+      function apply(filter) {
+        cards.forEach((card) => {
+          const category = card.getAttribute('data-category');
+          const visible = filter === 'all' || filter === category;
+          card.style.display = visible ? '' : 'none';
+        });
+
+        buttons.forEach((btn) => {
+          const active = btn.getAttribute('data-filter') === filter;
+          btn.classList.toggle('active', active);
+        });
+      }
+
+      apply(initial);
+
+      articleLinks.forEach((link) => {
+        link.addEventListener('click', (event) => {
+          playClick();
+
+          const href = link.getAttribute('href');
+          const isPrimaryClick = event.button === 0;
+          const hasModifier = event.metaKey || event.ctrlKey || event.shiftKey || event.altKey;
+
+          if (!isPrimaryClick || hasModifier || !href || href.startsWith('#')) return;
+
+          event.preventDefault();
+          window.setTimeout(() => {
+            window.location.assign(href);
+          }, 80);
+        });
+      });
+    })();
+  </script>
+</HomeLayout>

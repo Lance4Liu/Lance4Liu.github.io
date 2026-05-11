@@ -1,0 +1,119 @@
+---
+import BaseLayout from '../layouts/BaseLayout.astro';
+import SiteNav from '../components/SiteNav.astro';
+
+const cards = [
+  {
+    label: 'Profile 个人简历',
+    buttonImage: '/images/buttons/porfile.png',
+    href: '/profile'
+  },
+  {
+    label: 'AI Notes 学习笔记',
+    buttonImage: '/images/buttons/AINotes.png',
+    href: '/posts?category=tech'
+  },
+  {
+    label: 'PM thinking 产品思考',
+    buttonImage: '/images/buttons/PMThinking.png',
+    href: '/posts?category=product'
+  },
+  {
+    label: 'AI takes 产品测评',
+    buttonImage: '/images/buttons/AITakes.png',
+    href: '/posts?category=diary'
+  }
+];
+---
+
+<BaseLayout title="小柳飞刀 · Home">
+  <style is:global>
+    .site-bg {
+      display: none;
+    }
+  </style>
+  <SiteNav active="home" />
+
+  <main class="legacy-home-main">
+    <div class="legacy-home-bg" aria-hidden="true">
+      <img src="/images/bg/hero-bg.png" alt="" />
+    </div>
+
+    <div class="legacy-home-inner">
+      <div class="legacy-character-glow" aria-hidden="true"></div>
+
+      <div class="legacy-left-overlays">
+        <img class="legacy-title-logo" src="/images/logo/title-logo.png" alt="title logo" />
+      </div>
+
+      <section class="legacy-home-right">
+        {
+          cards.map((card) => (
+            <a href={card.href} class="legacy-menu-image-link">
+              <img class="legacy-menu-image" src={card.buttonImage} alt={card.label} />
+            </a>
+          ))
+        }
+      </section>
+    </div>
+  </main>
+
+  <script is:inline>
+    (() => {
+      const menuLinks = Array.from(document.querySelectorAll('.legacy-menu-image-link'));
+      if (!menuLinks.length) return;
+
+      const hoverSound = new Audio('/sounds/select.wav');
+      const clickSound = new Audio('/sounds/click.wav');
+      hoverSound.preload = 'auto';
+      clickSound.preload = 'auto';
+
+      const play = (audio) => {
+        try {
+          audio.currentTime = 0;
+          const promise = audio.play();
+          if (promise && typeof promise.catch === 'function') {
+            promise.catch(() => {});
+          }
+        } catch {}
+      };
+
+      menuLinks.forEach((link) => {
+        link.addEventListener('mouseenter', () => {
+          play(hoverSound);
+        });
+
+        link.addEventListener('click', (event) => {
+          play(clickSound);
+
+          const href = link.getAttribute('href');
+          const isPrimaryClick = event.button === 0;
+          const hasModifier = event.metaKey || event.ctrlKey || event.shiftKey || event.altKey;
+
+          if (!isPrimaryClick || hasModifier || !href || href.startsWith('#')) return;
+
+          event.preventDefault();
+          window.setTimeout(() => {
+            window.location.assign(href);
+          }, 80);
+        });
+      });
+    })();
+  </script>
+
+  <footer class="legacy-footer">
+    <div class="legacy-footer-left">
+      <span class="legacy-follow">FOLLOW ME</span>
+      <span class="legacy-follow-arrow">»»</span>
+      <div class="legacy-socials">
+        <a href="#">GitHub</a>
+        <a href="#">Email</a>
+        <a href="#">X</a>
+        <a href="#">LinkedIn</a>
+      </div>
+    </div>
+    <div class="legacy-footer-right">
+      © 2024 小柳飞刀 <span>|</span> 用代码改变世界，用思考构建未来 <i>◆</i>
+    </div>
+  </footer>
+</BaseLayout>

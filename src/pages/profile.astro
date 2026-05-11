@@ -1,0 +1,84 @@
+---
+import BaseLayout from '../layouts/BaseLayout.astro';
+import SiteNav from '../components/SiteNav.astro';
+
+const panels = [
+  { key: 'about', src: '/images/panels/AboutMe.png', alt: 'About me panel' },
+  { key: 'status', src: '/images/panels/PersonaStatue.png', alt: 'Personal status panel' },
+  { key: 'hobbies', src: '/images/panels/Hobbies.png', alt: 'Hobbies panel' },
+  { key: 'toolkit', src: '/images/panels/Toolkit.png', alt: 'Toolkit panel' }
+];
+---
+
+<BaseLayout title="Profile · 小柳飞刀">
+  <style is:global>
+    .site-bg {
+      display: none;
+    }
+  </style>
+
+  <SiteNav active="about" />
+
+  <main class="legacy-home-main">
+    <div class="legacy-home-bg" aria-hidden="true">
+      <img src="/images/bg/splatter-bg2.png" alt="" />
+    </div>
+
+    <div class="profile-panels-wrap">
+      <section class="profile-panels-grid">
+        {
+          panels.map((panel) => (
+            <article
+              class:list={['profile-panel-card', `profile-panel-${panel.key}`]}
+              data-profile-panel
+              tabindex="0"
+            >
+              <img src={panel.src} alt={panel.alt} loading="lazy" />
+            </article>
+          ))
+        }
+      </section>
+    </div>
+  </main>
+
+  <script is:inline>
+    (() => {
+      const cards = Array.from(document.querySelectorAll('[data-profile-panel]'));
+      if (!cards.length) return;
+
+      const hoverSound = new Audio('/sounds/select.wav');
+      hoverSound.preload = 'auto';
+
+      const playHover = () => {
+        try {
+          hoverSound.currentTime = 0;
+          const promise = hoverSound.play();
+          if (promise && typeof promise.catch === 'function') {
+            promise.catch(() => {});
+          }
+        } catch {}
+      };
+
+      cards.forEach((card) => {
+        card.addEventListener('mouseenter', playHover);
+        card.addEventListener('focusin', playHover);
+      });
+    })();
+  </script>
+
+  <footer class="legacy-footer">
+    <div class="legacy-footer-left">
+      <span class="legacy-follow">FOLLOW ME</span>
+      <span class="legacy-follow-arrow">»»</span>
+      <div class="legacy-socials">
+        <a href="#">GitHub</a>
+        <a href="#">Email</a>
+        <a href="#">X</a>
+        <a href="#">LinkedIn</a>
+      </div>
+    </div>
+    <div class="legacy-footer-right">
+      © 2024 小柳飞刀 <span>|</span> 用代码改变世界，用思考构建未来 <i>◆</i>
+    </div>
+  </footer>
+</BaseLayout>

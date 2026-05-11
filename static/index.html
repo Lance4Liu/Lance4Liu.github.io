@@ -1,0 +1,1686 @@
+<!DOCTYPE html>
+<html lang="zh">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>小柳飞刀 · Personal Homepage</title>
+<link href="https://fonts.googleapis.com/css2?family=Oswald:ital,wght@0,400;0,600;0,700;1,700&family=Noto+Sans+SC:wght@400;500;700;900&family=Bebas+Neue&family=Share+Tech+Mono&display=swap" rel="stylesheet">
+<script src="https://unpkg.com/react@18.3.1/umd/react.development.js" integrity="sha384-hD6/rw4ppMLGNu3tX5cjIb+uRZ7UkRJ6BPkLpg4hAu/6onKUg4lLsHAs9EBPT82L" crossorigin="anonymous"></script>
+<script src="https://unpkg.com/react-dom@18.3.1/umd/react-dom.development.js" integrity="sha384-u6aeetuaXnQ38mYT8rp6sbXaQe3NL9t+IBXmnYxwkUI2Hw4bsp2Wvmx4yRQF1uAm" crossorigin="anonymous"></script>
+<script src="https://unpkg.com/@babel/standalone@7.29.0/babel.min.js" integrity="sha384-m08KidiNqLdpJqLq95G/LEi8Qvjl/xUYll3QILypMoQ65QorJ9Lvtp2RXYGBFj1y" crossorigin="anonymous"></script>
+<style>
+*{margin:0;padding:0;box-sizing:border-box;}
+:root{
+  --red:#c8150a;--red2:#ff2010;--green:#39ff7e;
+  --bg:#080404;--white:#f2eeee;--gold:#d4a820;
+}
+html,body,#root{width:100%;height:100%;overflow:hidden;background:var(--bg);color:var(--white);}
+@keyframes fadeIn{from{opacity:0}to{opacity:1}}
+@keyframes slideRight{from{transform:translateX(-30px)}to{transform:translateX(0)}}
+@keyframes slideUp{from{transform:translateY(20px)}to{transform:translateY(0)}}
+@keyframes pulse{0%,100%{opacity:1}50%{opacity:0.6}}
+@keyframes cardIn{from{transform:translateX(55px)}to{transform:translateX(0)}}
+
+/* Scrollbar */
+::-webkit-scrollbar{width:4px;background:#1a0000}
+::-webkit-scrollbar-thumb{background:var(--red)}
+</style>
+</head>
+<body>
+<div id="root"></div>
+<script type="text/babel">
+const { useState, useEffect, useRef, useCallback } = React;
+
+/* ========= BACKGROUND ========= */
+const Background = () => (
+  <div style={{position:'fixed',inset:0,zIndex:0,overflow:'hidden',pointerEvents:'none'}}>
+    {/* Raw background image, no overlays or post effects */}
+    <img src="images/bg/hero-bg.png"
+      style={{
+        position:'absolute',inset:0,width:'100%',height:'100%',
+        objectFit:'cover',objectPosition:'center',
+      }}/>
+  </div>
+);
+
+/* ========= ICONS (SVG) ========= */
+const NavIcons = {
+  home: <svg width="14" height="14" viewBox="0 0 24 24" fill="currentColor"><path d="M10 20v-6h4v6h5v-8h3L12 3 2 12h3v8z"/></svg>,
+  user: <svg width="14" height="14" viewBox="0 0 24 24" fill="currentColor"><path d="M12 12c2.7 0 4.8-2.1 4.8-4.8S14.7 2.4 12 2.4 7.2 4.5 7.2 7.2 9.3 12 12 12zm0 2.4c-3.2 0-9.6 1.6-9.6 4.8v2.4h19.2v-2.4c0-3.2-6.4-4.8-9.6-4.8z"/></svg>,
+  clock: <svg width="14" height="14" viewBox="0 0 24 24" fill="currentColor"><path d="M12 2C6.5 2 2 6.5 2 12s4.5 10 10 10 10-4.5 10-10S17.5 2 12 2zm.5 10.8l-3.3 2-.5-.8 3-1.8V7h1v5.8z"/></svg>,
+  link: <svg width="14" height="14" viewBox="0 0 24 24" fill="currentColor"><path d="M3.9 12c0-1.7 1.4-3.1 3.1-3.1h4V7H7C4.2 7 2 9.2 2 12s2.2 5 5 5h4v-1.9H7c-1.7 0-3.1-1.4-3.1-3.1zM8 13h8v-2H8v2zm9-6h-4v1.9h4c1.7 0 3.1 1.4 3.1 3.1s-1.4 3.1-3.1 3.1h-4V17h4c2.8 0 5-2.2 5-5s-2.2-5-5-5z"/></svg>,
+  msg: <svg width="14" height="14" viewBox="0 0 24 24" fill="currentColor"><path d="M20 2H4c-1.1 0-2 .9-2 2v18l4-4h14c1.1 0 2-.9 2-2V4c0-1.1-.9-2-2-2z"/></svg>,
+  search: <svg width="16" height="16" viewBox="0 0 24 24" fill="currentColor"><path d="M15.5 14h-.79l-.28-.27A6.47 6.47 0 0 0 16 9.5 6.5 6.5 0 1 0 9.5 16c1.61 0 3.09-.59 4.23-1.57l.27.28v.79l5 4.99L20.49 19l-4.99-5zm-6 0C7.01 14 5 11.99 5 9.5S7.01 5 9.5 5 14 7.01 14 9.5 11.99 14 9.5 14z"/></svg>,
+  moon: <svg width="16" height="16" viewBox="0 0 24 24" fill="currentColor"><path d="M12 3c-4.97 0-9 4.03-9 9s4.03 9 9 9 9-4.03 9-9c0-.46-.04-.92-.1-1.36-.98 1.37-2.58 2.26-4.4 2.26-2.98 0-5.4-2.42-5.4-5.4 0-1.81.89-3.42 2.26-4.4-.44-.06-.9-.1-1.36-.1z"/></svg>,
+  sun: <svg width="16" height="16" viewBox="0 0 24 24" fill="currentColor"><path d="M12 7c-2.76 0-5 2.24-5 5s2.24 5 5 5 5-2.24 5-5-2.24-5-5-5zM2 13h2v-2H2v2zm18 0h2v-2h-2v2zM11 2v2h2V2h-2zm0 18v2h2v-2h-2zM5.99 4.58l-1.42 1.42 1.41 1.41 1.42-1.42L5.99 4.58zm12.02 12.01l-1.41-1.41-1.42 1.42 1.41 1.41 1.42-1.42zM5.99 19.42l1.41-1.41-1.42-1.42-1.41 1.41 1.42 1.42zM18.01 4.58l-1.42 1.42 1.42 1.41 1.42-1.41-1.42-1.42z"/></svg>,
+  github: <svg width="18" height="18" viewBox="0 0 24 24" fill="currentColor"><path d="M12 .297c-6.63 0-12 5.373-12 12 0 5.303 3.438 9.8 8.205 11.385.6.113.82-.258.82-.577 0-.285-.01-1.04-.015-2.04-3.338.724-4.042-1.61-4.042-1.61C4.422 18.07 3.633 17.7 3.633 17.7c-1.087-.744.084-.729.084-.729 1.205.084 1.838 1.236 1.838 1.236 1.07 1.835 2.809 1.305 3.495.998.108-.776.417-1.305.76-1.605-2.665-.3-5.466-1.332-5.466-5.93 0-1.31.465-2.38 1.235-3.22-.135-.303-.54-1.523.105-3.176 0 0 1.005-.322 3.3 1.23.96-.267 1.98-.399 3-.405 1.02.006 2.04.138 3 .405 2.28-1.552 3.285-1.23 3.285-1.23.645 1.653.24 2.873.12 3.176.765.84 1.23 1.91 1.23 3.22 0 4.61-2.805 5.625-5.475 5.92.42.36.81 1.096.81 2.22 0 1.606-.015 2.896-.015 3.286 0 .315.21.69.825.57C20.565 22.092 24 17.592 24 12.297c0-6.627-5.373-12-12-12"/></svg>,
+  mail: <svg width="18" height="18" viewBox="0 0 24 24" fill="currentColor"><path d="M20 4H4c-1.1 0-2 .9-2 2v12c0 1.1.9 2 2 2h16c1.1 0 2-.9 2-2V6c0-1.1-.9-2-2-2zm0 4l-8 5-8-5V6l8 5 8-5v2z"/></svg>,
+  twitter: <svg width="18" height="18" viewBox="0 0 24 24" fill="currentColor"><path d="M23 3a10.9 10.9 0 0 1-3.14 1.53 4.48 4.48 0 0 0-7.86 3v1A10.66 10.66 0 0 1 3 4s-4 9 5 13a11.64 11.64 0 0 1-7 2c9 5 20 0 20-11.5a4.5 4.5 0 0 0-.08-.83A7.72 7.72 0 0 0 23 3z"/></svg>,
+  linkedin: <svg width="18" height="18" viewBox="0 0 24 24" fill="currentColor"><path d="M16 8a6 6 0 0 1 6 6v7h-4v-7a2 2 0 0 0-2-2 2 2 0 0 0-2 2v7h-4v-7a6 6 0 0 1 6-6zM2 9h4v12H2z"/><circle cx="4" cy="4" r="2"/></svg>,
+};
+
+/* ========= MENU CARD ICONS ========= */
+const HatIcon = () => <img src="images/icons/icon1.png" style={{width:'100%',height:'100%',objectFit:'contain'}}/>;
+
+const BurstIcon = () => <img src="images/icons/icon2.png" style={{width:'100%',height:'100%',objectFit:'contain',filter:'invert(1)'}}/>;
+
+const CrosshairIcon = () => <img src="images/icons/icon3.png" style={{width:'100%',height:'100%',objectFit:'contain',filter:'invert(1)'}}/>;
+
+const BookIcon = () => <img src="images/icons/icon4.png" style={{width:'100%',height:'100%',objectFit:'contain'}}/>;
+
+const SwordIcon = () => <img src="images/icons/icon5.png" style={{width:'100%',height:'100%',objectFit:'contain',filter:'invert(1)'}}/>;
+
+/* ========= NAV BAR ========= */
+const NavBar = ({ currentPage, onNav, searchOpen, setSearchOpen, darkMode, setDarkMode }) => {
+  const navItems = [
+    { id:'home', label:'首页', icon: NavIcons.home },
+    { id:'about', label:'关于我', icon: NavIcons.user },
+    { id:'timeline', label:'时间轴', icon: NavIcons.clock },
+    { id:'links', label:'友链', icon: NavIcons.link },
+    { id:'guestbook', label:'留言板', icon: NavIcons.msg },
+  ];
+  const [hovered, setHovered] = useState(null);
+
+  return (
+    <nav style={{
+      position:'fixed',top:0,left:0,right:0,zIndex:100,
+      display:'flex',alignItems:'center',justifyContent:'center',
+      padding:'0 40px',height:'54px',
+      background: darkMode ? 'rgba(8,4,4,0.85)' : 'rgba(240,230,228,0.92)',
+      backdropFilter:'blur(10px)',
+      borderBottom: `1px solid rgba(200,21,10,0.3)`,
+    }}>
+      {/* Nav items */}
+      <div style={{display:'flex',gap:4,alignItems:'center'}}>
+        {navItems.map(item=>{
+          const active = currentPage === item.id;
+          const isHov = hovered === item.id;
+          return (
+            <button key={item.id}
+              onClick={()=>onNav(item.id)}
+              onMouseEnter={()=>setHovered(item.id)}
+              onMouseLeave={()=>setHovered(null)}
+              style={{
+                display:'flex',alignItems:'center',gap:5,
+                padding:'6px 14px',
+                background: active ? 'var(--red)' : isHov ? 'rgba(200,21,10,0.15)' : 'transparent',
+                border: active ? '1px solid var(--red)' : '1px solid transparent',
+                color: active ? 'white' : darkMode ? 'rgba(242,238,238,0.85)' : '#2a0a0a',
+                cursor:'pointer',fontFamily:"'Noto Sans SC',sans-serif",fontSize:13,fontWeight:500,
+                transition:'all 0.15s',
+                clipPath: active ? 'polygon(0 0,100% 0,97% 100%,3% 100%)' : 'none',
+              }}>
+              <span style={{opacity:0.9,display:'flex',alignItems:'center'}}>{item.icon}</span>
+              {item.label}
+            </button>
+          );
+        })}
+      </div>
+
+      {/* Right icons */}
+      <div style={{position:'absolute',right:40,display:'flex',gap:10,alignItems:'center'}}>
+        <button onClick={()=>setSearchOpen(!searchOpen)}
+          style={{background:'none',border:'none',color:darkMode?'var(--white)':'#2a0a0a',cursor:'pointer',
+            padding:6,display:'flex',opacity:searchOpen?1:0.7,transition:'all 0.15s',
+          }}
+          onMouseEnter={e=>e.currentTarget.style.opacity='1'}
+          onMouseLeave={e=>e.currentTarget.style.opacity=searchOpen?'1':'0.7'}>
+          {NavIcons.search}
+        </button>
+        <button onClick={()=>setDarkMode(!darkMode)}
+          style={{background:'none',border:'none',color:darkMode?'var(--white)':'#2a0a0a',cursor:'pointer',
+            padding:6,display:'flex',opacity:0.7,transition:'all 0.2s',
+          }}
+          onMouseEnter={e=>{e.currentTarget.style.opacity='1';e.currentTarget.style.transform='rotate(20deg)'}}
+          onMouseLeave={e=>{e.currentTarget.style.opacity='0.7';e.currentTarget.style.transform='rotate(0)'}}>
+          {darkMode ? NavIcons.moon : NavIcons.sun}
+        </button>
+      </div>
+    </nav>
+  );
+};
+
+/* ========= SEARCH OVERLAY ========= */
+const SearchOverlay = ({ onClose, darkMode }) => {
+  const [q, setQ] = useState('');
+  const inputRef = useRef(null);
+  useEffect(()=>{ inputRef.current?.focus(); },[]);
+  const results = ['Persona 5 风格设计','个人博客搭建','技术思考笔记','产品设计逻辑','生活日志2024'].filter(r=>q&&r.includes(q));
+  return (
+    <div style={{
+      position:'fixed',inset:0,zIndex:200,
+      background:'rgba(5,2,2,0.92)',backdropFilter:'blur(12px)',
+      display:'flex',flexDirection:'column',alignItems:'center',paddingTop:160,
+      animation:'fadeIn 0.2s ease',
+    }} onClick={onClose}>
+      <div onClick={e=>e.stopPropagation()} style={{width:'min(600px,90vw)'}}>
+        <div style={{
+          display:'flex',alignItems:'center',gap:12,
+          borderBottom:`2px solid var(--red)`,
+          padding:'10px 0',marginBottom:20,
+        }}>
+          <span style={{color:'var(--red)',display:'flex'}}>{NavIcons.search}</span>
+          <input ref={inputRef} value={q} onChange={e=>setQ(e.target.value)}
+            placeholder="搜索内容..."
+            style={{
+              background:'none',border:'none',outline:'none',
+              color:'white',fontSize:24,flex:1,
+              fontFamily:"'Noto Sans SC',sans-serif",
+            }}/>
+          <button onClick={onClose} style={{background:'none',border:'none',color:'rgba(255,255,255,0.5)',
+            fontSize:24,cursor:'pointer',lineHeight:1}}>✕</button>
+        </div>
+        {q==='' && <p style={{color:'rgba(255,255,255,0.3)',fontFamily:"'Noto Sans SC'",fontSize:13}}>输入关键词开始搜索…</p>}
+        {results.map((r,i)=>(
+          <div key={i} style={{
+            padding:'12px 16px',marginBottom:6,
+            background:'rgba(200,21,10,0.08)',
+            border:'1px solid rgba(200,21,10,0.25)',
+            cursor:'pointer',transition:'all 0.15s',
+            fontFamily:"'Noto Sans SC'",fontSize:15,
+            clipPath:'polygon(0 0,100% 0,99% 100%,1% 100%)',
+          }}
+          onMouseEnter={e=>e.currentTarget.style.background='rgba(200,21,10,0.22)'}
+          onMouseLeave={e=>e.currentTarget.style.background='rgba(200,21,10,0.08)'}>
+            {r}
+          </div>
+        ))}
+        {q && results.length===0 && <p style={{color:'rgba(255,255,255,0.3)',fontFamily:"'Noto Sans SC'",fontSize:13}}>没有找到相关内容</p>}
+      </div>
+    </div>
+  );
+};
+
+/* ========= MENU CARD ========= */
+const MenuCard = ({ icon, iconEl, en1, en2, cn, desc, sideEl, onClick, delay, darkMode }) => {
+  const [hov, setHov] = useState(false);
+  return (
+    <div onClick={onClick}
+      onMouseEnter={()=>setHov(true)}
+      onMouseLeave={()=>setHov(false)}
+      style={{
+        display:'flex',alignItems:'stretch',
+        border:`2px solid ${hov?'var(--red2)':'rgba(255,255,255,0.85)'}`,
+        background: hov ? 'rgba(180,15,5,0.22)' : darkMode ? 'rgba(8,3,3,0.88)' : 'rgba(240,228,225,0.9)',
+        cursor:'pointer',
+        clipPath:'polygon(0 0,100% 0,98.5% 100%,1.5% 100%)',
+        transition:'all 0.2s',
+        transform: hov ? 'translateX(6px) scaleY(1.015)' : 'translateX(0) scaleY(1)',
+        boxShadow: hov ? '4px 4px 0 var(--red),inset 0 0 30px rgba(200,21,10,0.1)' : 'none',
+        animation:`cardIn 0.5s ${delay}ms both ease-out`,
+        position:'relative',overflow:'hidden',
+        minHeight:88,
+      }}>
+      {/* Shimmer on hover */}
+      {hov && <div style={{position:'absolute',inset:0,background:'linear-gradient(105deg,transparent 40%,rgba(255,255,255,0.04) 50%,transparent 60%)',pointerEvents:'none'}}/>}
+      {/* Icon area */}
+      <div style={{
+        width:86,flexShrink:0,display:'flex',alignItems:'center',justifyContent:'center',
+        background: hov ? 'rgba(180,10,5,0.4)' : 'rgba(180,10,5,0.25)',
+        borderRight:`2px solid ${hov?'rgba(255,40,20,0.6)':'rgba(255,255,255,0.3)'}`,
+        clipPath:'polygon(0 0,100% 0,78% 100%,0 100%)',
+        paddingRight:10,
+        transition:'all 0.2s',
+      }}>
+        <div style={{width:56,height:56}}>{iconEl}</div>
+      </div>
+      {/* Text area */}
+      <div style={{flex:1,padding:'10px 16px',display:'flex',flexDirection:'column',justifyContent:'center',minWidth:0}}>
+        <div style={{display:'flex',alignItems:'baseline',gap:10,flexWrap:'wrap'}}>
+          <span style={{
+            fontFamily:"'Oswald',sans-serif",fontWeight:700,fontStyle:'italic',
+            fontSize: en2 ? 26 : 32,
+            color: hov ? 'white' : darkMode ? 'var(--white)' : '#1a0505',
+            lineHeight:1.1,letterSpacing:1,
+            transition:'color 0.2s',
+            textShadow: hov ? '0 0 20px rgba(255,255,255,0.3)' : 'none',
+          }}>
+            {en1}{en2 && <><br/>{en2}</>}
+          </span>
+          <span style={{
+            fontSize:11,fontWeight:700,
+            fontFamily:"'Noto Sans SC',sans-serif",
+            color:'white',
+            background:'rgba(200,21,10,0.85)',
+            padding:'2px 7px',
+            border:'1px solid rgba(255,255,255,0.4)',
+            letterSpacing:1,flexShrink:0,
+          }}>{cn}</span>
+        </div>
+        <p style={{
+          fontFamily:"'Noto Sans SC',sans-serif",fontSize:11.5,
+          color: darkMode ? 'rgba(242,238,238,0.55)' : 'rgba(30,5,5,0.6)',
+          marginTop:4,letterSpacing:0.5,
+        }}>{desc}</p>
+      </div>
+      {/* Arrow */}
+      <div style={{
+        display:'flex',alignItems:'center',paddingRight:14,paddingLeft:8,
+        color: hov ? 'var(--red2)' : 'rgba(255,255,255,0.3)',
+        fontSize:18,transition:'all 0.2s',
+        transform: hov ? 'translateX(4px)' : 'none',
+      }}>›</div>
+      {/* Side decoration */}
+      {sideEl && (
+        <div style={{width:36,display:'flex',alignItems:'center',justifyContent:'center',
+          paddingRight:8,opacity:0.7}}>
+          {sideEl}
+        </div>
+      )}
+    </div>
+  );
+};
+
+/* ========= TAROT CARD ========= */
+const TarotCard = ({ onClick, darkMode }) => {
+  const [hov, setHov] = useState(false);
+  return (
+    <div onClick={onClick}
+      onMouseEnter={()=>setHov(true)}
+      onMouseLeave={()=>setHov(false)}
+      style={{
+        width:92,
+        border:`2px solid ${hov?'var(--red2)':'rgba(255,255,255,0.6)'}`,
+        background: darkMode ? 'rgba(8,3,3,0.9)' : 'rgba(240,228,225,0.95)',
+        cursor:'pointer',
+        transition:'all 0.25s',
+        transform: hov ? 'scale(1.06) rotate(-1deg)' : 'rotate(-2deg)',
+        boxShadow: hov ? '0 0 20px rgba(200,21,10,0.6),4px 4px 0 var(--red)' : '3px 3px 8px rgba(0,0,0,0.5)',
+        overflow:'hidden',
+        clipPath:'polygon(4% 0,96% 0,100% 4%,100% 96%,96% 100%,4% 100%,0 96%,0 4%)',
+      }}>
+      <img src="images/icons/tarot.png" style={{width:'100%',display:'block',objectFit:'contain'}}/>
+    </div>
+  );
+};
+
+/* ========= CHARACTER ART ========= */
+const CharacterArea = ({ darkMode }) => (
+  <div style={{
+    position:'absolute',
+    bottom:44,      /* above footer */
+    left:'-2%',
+    width:'52%',
+    height:'calc(100% - 54px)',   /* below nav */
+    display:'flex',alignItems:'flex-end',justifyContent:'flex-start',
+    pointerEvents:'none',zIndex:2,
+    overflow:'visible',
+  }}>
+    {/* Soft red glow behind character */}
+    <div style={{
+      position:'absolute',bottom:'5%',left:'30%',transform:'translateX(-50%)',
+      width:'55%',height:'60%',
+      background:'radial-gradient(ellipse, rgba(180,10,5,0.35) 0%, transparent 70%)',
+      filter:'blur(40px)',
+    }}/>
+    {/* Hero character image removed per latest asset update */}
+  </div>
+);
+
+/* ========= HOME PAGE ========= */
+const HomePage = ({ onNav, darkMode }) => {
+  const cards = [
+    { id:'profile', en1:'Profile', cn:'个人简历', desc:'了解我的经历、技能与成就', iconEl:<HatIcon/>, delay:100 },
+    { id:'techblog', en1:'Tech', en2:'Blog', cn:'技术博客', desc:'记录技术思考与实践', iconEl:<BurstIcon/>, sideEl:<SwordIcon/>, delay:200 },
+    { id:'product', en1:'Product', en2:'Thinking', cn:'产品思考', desc:'探索产品设计与商业逻辑', iconEl:<CrosshairIcon/>, delay:300 },
+    { id:'diary', en1:'Diary', cn:'个人日志', desc:'记录生活、灵感与成长', iconEl:<BookIcon/>, delay:400 },
+  ];
+
+  return (
+    <div style={{
+      position:'relative',zIndex:1,width:'100%',height:'100%',
+      paddingTop:54,display:'flex',
+    }}>
+      <CharacterArea darkMode={darkMode}/>
+
+      {/* ===== LEFT TEXT OVERLAYS ===== */}
+      {/* Logo */}
+      <div style={{
+        position:'absolute',top:58,left:16,zIndex:10,
+      }}>
+        <img src="images/logo/title-logo.png"
+          style={{width:260,height:'auto',display:'block',
+            filter:'drop-shadow(0 2px 8px rgba(0,0,0,0.6))',
+          }}/>
+      </div>
+
+      {/* Quote box */}
+      <div style={{
+        position:'absolute',top:248,left:28,zIndex:10,
+        borderLeft:`3px solid var(--red)`,
+        padding:'8px 14px',
+        background: darkMode ? 'rgba(8,3,3,0.75)' : 'rgba(240,228,225,0.85)',
+        animation:'slideRight 0.5s 0.15s both ease',
+        maxWidth:200,
+      }}>
+        <p style={{
+          fontFamily:"'Noto Sans SC',sans-serif",fontSize:13,fontWeight:500,
+          color: darkMode ? 'rgba(242,238,238,0.9)' : '#1a0505',
+          lineHeight:1.9,letterSpacing:0.5,
+        }}>
+          技术是我的武器，<br/>
+          思考是我的利刃，<br/>
+          记录是我的轨迹。
+        </p>
+      </div>
+
+      {/* TAKE YOUR HEART */}
+      <div style={{
+        position:'absolute',bottom:60,left:12,zIndex:10,
+      }}>
+        <div style={{
+          fontFamily:"'Bebas Neue',sans-serif",
+          fontSize:38,
+          color:'white',letterSpacing:5,lineHeight:1,
+          textShadow:'3px 3px 0 var(--red)',
+          display:'block',
+        }}>TAKE Y<span style={{color:'var(--red)'}}>O</span>UR HE<span style={{color:'var(--red)'}}>★</span>RT</div>
+        <div style={{
+          fontFamily:"'Noto Sans SC',sans-serif",fontSize:11,
+          color:'rgba(255,255,255,0.5)',letterSpacing:1,marginTop:4,
+          borderTop:'1px solid rgba(200,21,10,0.3)',paddingTop:4,
+        }}>＿在思考中构建，在记录中进化。</div>
+      </div>
+
+      {/* ===== RIGHT SECTION ===== */}
+      <div style={{
+        marginLeft:'auto',
+        width:'50%',
+        paddingTop:20,paddingRight:24,paddingLeft:16,
+        display:'flex',flexDirection:'column',justifyContent:'center',gap:8,
+        zIndex:10,
+      }}>
+        {cards.map(c=>(
+          <MenuCard key={c.id}
+            {...c}
+            onClick={()=>onNav(c.id)}
+            darkMode={darkMode}
+          />
+        ))}
+        {/* Tarot card - bottom right */}
+        <div style={{display:'flex',justifyContent:'flex-end',marginTop:4}}>
+          <TarotCard onClick={()=>onNav('profile')} darkMode={darkMode}/>
+        </div>
+      </div>
+    </div>
+  );
+};
+
+/* ========= CONTENT PAGES ========= */
+const contentData = {
+  profile: {
+    title:'Profile',cn:'个人简历',color:'#cc1111',
+    content: () => (
+      <div>
+        <Section title="基本信息">
+          <InfoRow label="名字" value="小柳飞刀"/>
+          <InfoRow label="代号" value="HACKER"/>
+          <InfoRow label="方向" value="全栈开发 · 产品设计 · 技术写作"/>
+          <InfoRow label="座右铭" value="技术是我的武器，思考是我的利刃"/>
+        </Section>
+        <Section title="技能">
+          <SkillBar name="前端开发" level={90}/>
+          <SkillBar name="后端架构" level={75}/>
+          <SkillBar name="产品思维" level={85}/>
+          <SkillBar name="技术写作" level={88}/>
+          <SkillBar name="系统设计" level={70}/>
+        </Section>
+        <Section title="经历">
+          <TimeItem year="2023–至今" role="独立开发者" desc="构建个人产品，探索技术边界"/>
+          <TimeItem year="2021–2023" role="高级工程师" desc="负责核心系统架构设计与实现"/>
+          <TimeItem year="2019–2021" role="前端工程师" desc="专注用户体验与性能优化"/>
+        </Section>
+      </div>
+    )
+  },
+  techblog: {
+    title:'Tech Blog',cn:'技术博客',color:'#cc1111',
+    content: () => (
+      <div>
+        <ArticleTag label="技术博客"/>
+        <ArticleH1>P5R 风格的个人博客搭建指南</ArticleH1>
+        <ArticleMeta date="2024-05-20" author="小柳飞刀" category="前端开发" readTime="8 分钟阅读"/>
+        <ArticleP>本文将记录如何从零开始，搭建一具有 P5R 风格的个人博客，从设计思路、技术选型到具体实现，带你一步步实现梦想中的站点。</ArticleP>
+
+        <ArticleSection num="1" title="设计灵感"/>
+        <ArticleP>女神异闻录 5 皇家版（P5R）以其独特的视觉风格给我留下了深刻印象。强烈的红黑配色、铆钉与撕纸元素、动感的排版与 UI 设计，充满了反叛与个性的气息。</ArticleP>
+        <ABlockquote text="我们追求的不是被认可，而是颠覆常规的自由。" by="JOKER"/>
+        <ArticleP>因此，我希望我的博客也能传达这种态度：简洁而不失个性，专注内容本身，但在细节处体现风格。</ArticleP>
+
+        <ArticleSection num="2" title="技术栈"/>
+        <ArticleP>本博客使用以下技术构建：</ArticleP>
+        <ABulletList items={[
+          'Astro — 现代静态站点生成器，构建速度极快',
+          'Tailwind CSS — 原子化 CSS 框架，快速实现设计稿',
+          'TypeScript — 类型安全的 JavaScript，减少运行时错误',
+          'MDX — 让 Markdown 拥有组件能力，内容更丰富',
+        ]}/>
+
+        <ArticleSection num="3" title="核心视觉实现"/>
+        <ArticleP>P5R 风格的核心在于「撕裂感」和「强对比」。在 CSS 中，我使用 <code style={{fontFamily:"'Share Tech Mono'",background:'rgba(200,21,10,0.15)',padding:'1px 6px',color:'var(--red)'}}>clip-path</code> 实现不规则切角，用 <code style={{fontFamily:"'Share Tech Mono'",background:'rgba(200,21,10,0.15)',padding:'1px 6px',color:'var(--red)'}}>mix-blend-mode</code> 处理纹理叠加效果。</ArticleP>
+        <ABulletList items={[
+          '背景：SVG 噪点纹理 + CSS 径向渐变模拟油漆飞溅',
+          '卡片：clip-path 切角 + 白色描边 + hover 红色渐变',
+          '字体：Bebas Neue（展示）+ Oswald（标题）+ Noto Sans SC（正文）',
+          '动画：CSS animation + React state 控制入场时序',
+        ]}/>
+
+        <ArticleSection num="4" title="性能优化"/>
+        <ArticleP>视觉效果丰富不代表性能差。通过合理使用 <code style={{fontFamily:"'Share Tech Mono'",background:'rgba(200,21,10,0.15)',padding:'1px 6px',color:'var(--red)'}}>will-change</code>、CSS transform 代替 top/left 动画，以及图片的懒加载策略，Lighthouse 得分稳定在 95+ 。</ArticleP>
+        <ArticleP style={{marginTop:16,borderTop:'1px solid rgba(0,0,0,0.18)',paddingTop:16,color:'rgba(20,20,20,0.62)',fontSize:13}}>
+          持续更新中 · 如有问题欢迎在留言板交流
+        </ArticleP>
+      </div>
+    )
+  },
+  product: {
+    title:'Product Thinking',cn:'产品思考',color:'#cc1111',
+    content: () => (
+      <div>
+        <ArticleTag label="产品思考"/>
+        <ArticleH1>设计思维在产品开发中的应用</ArticleH1>
+        <ArticleMeta date="2024-05-10" author="小柳飞刀" category="产品方法论" readTime="6 分钟阅读"/>
+        <ArticleP>产品设计从来不是「想当然」的艺术，而是一套可以学习、可以迭代的方法论。本文梳理了我在实践中总结的设计思维框架，希望对你有所启发。</ArticleP>
+
+        <ArticleSection num="1" title="什么是设计思维"/>
+        <ArticleP>设计思维（Design Thinking）是一种以人为本的问题解决框架。它强调在深度理解用户需求的基础上，通过快速原型和持续迭代来找到最优解。</ArticleP>
+        <ABlockquote text="不要问用户想要什么，要观察他们在做什么，以及为什么这么做。" by="IDEO"/>
+
+        <ArticleSection num="2" title="五步法模型"/>
+        <ABulletList items={[
+          '共情（Empathize）— 深度理解用户，访谈、观察、影随，建立真实画像',
+          '定义（Define）— 提炼核心问题，将观察转化为清晰的「我们如何能……」问句',
+          '构想（Ideate）— 发散思维，头脑风暴，不预设对错，数量优先于质量',
+          '原型（Prototype）— 用最低成本将想法具象化，纸上原型、线框图、可点击 Demo',
+          '测试（Test）— 回到用户面前，用真实反馈驱动迭代，而非内部会议讨论',
+        ]}/>
+
+        <ArticleSection num="3" title="实践中的常见误区"/>
+        <ArticleP>许多团队将设计思维当作「一次性流程」而非「持续循环」。实际上，每一次用户反馈都应触发新一轮的共情与定义，产品的进化从未真正停止。</ArticleP>
+        <ABulletList items={[
+          '误区一：跳过共情直接进入构想，凭直觉设计而非数据支撑',
+          '误区二：原型过于精细，导致不敢被否定，失去迭代意义',
+          '误区三：测试只找「友好用户」，无法获得真实负面反馈',
+        ]}/>
+
+        <ArticleSection num="4" title="我的工具箱"/>
+        <ABulletList items={[
+          'Figma — 原型设计与团队协作',
+          'Notion — 用户访谈记录与洞察整理',
+          'Mixpanel — 用户行为数据分析',
+          'Linear — 需求管理与迭代追踪',
+        ]}/>
+        <ArticleP style={{marginTop:16,borderTop:'1px solid rgba(0,0,0,0.18)',paddingTop:16,color:'rgba(20,20,20,0.62)',fontSize:13}}>
+          持续更新中 · 欢迎在留言板分享你的实践经验
+        </ArticleP>
+      </div>
+    )
+  },
+  diary: {
+    title:'Diary',cn:'个人日志',color:'#cc1111',
+    content: () => (
+      <div>
+        <ArticleTag label="个人日志"/>
+        <ArticleH1>那些年踩过的坑</ArticleH1>
+        <ArticleMeta date="2024-05-05" author="小柳飞刀" category="个人日志" readTime="5 分钟阅读"/>
+        <ArticleP>写这篇文章的时候，我刚刚修完一个线上 Bug，那个 Bug 在生产环境潜伏了整整三个月。坐在屏幕前，我突然想把这些年踩过的坑都写下来，不是为了炫耀，而是为了记住。</ArticleP>
+
+        <ArticleSection num="1" title="技术上的坑"/>
+        <ABulletList items={[
+          '过早优化 — 在产品还没有 PMF 的时候就开始搞微服务，浪费了三个月',
+          '忽略边界条件 — 「这种情况用户不会操作」，然后用户就这么操作了',
+          '文档缺失 — 半年后看自己写的代码，完全不知道当初在想什么',
+          '测试覆盖率 — 「先上线，测试之后补」，之后永远没有到来',
+        ]}/>
+
+        <ArticleSection num="2" title="最难忘的一次"/>
+        <ArticleP>2022年的某个深夜，我在生产环境执行了一条 SQL，忘记加 WHERE 条件。那一刻的心跳我到现在都记得。还好有备份，但那三个小时的恢复过程让我明白：敬畏线上环境不是胆小，是专业。</ArticleP>
+        <ABlockquote text="每一个「这次应该没问题」的背后，都藏着一个「下次一定加备份」的教训。" by="自我总结"/>
+
+        <ArticleSection num="3" title="产品判断上的坑"/>
+        <ABulletList items={[
+          '「用户需要这个功能」— 实际上只有我一个人想要',
+          '过度设计 — 把一个简单需求做成了需要培训才能使用的系统',
+          '忽视留存 — 只关注新用户增长，忽略了老用户在悄悄流失',
+        ]}/>
+
+        <ArticleSection num="4" title="成长的代价"/>
+        <ArticleP>踩坑从来不丢人。丢人的是踩了坑，没有记录，没有复盘，然后在同一个地方再次摔倒。这个日志存在的意义，就是让我记住每一次代价，把它们变成真正属于自己的经验。</ArticleP>
+        <ArticleP style={{marginTop:16,borderTop:'1px solid rgba(0,0,0,0.18)',paddingTop:16,color:'rgba(20,20,20,0.62)',fontSize:13}}>
+          写于某个深夜 · 希望你的坑比我少一点
+        </ArticleP>
+      </div>
+    )
+  },
+  about: {
+    title:'About',cn:'关于我',color:'#cc1111',
+    content: () => (
+      <div>
+        <Section title="关于小柳飞刀">
+          <p style={{fontFamily:"'Noto Sans SC'",lineHeight:2,fontSize:14,color:'rgba(242,238,238,0.8)',marginBottom:16}}>
+            我是一名全栈工程师兼独立开发者，热衷于用技术解决真实问题。代码是我的工具，思考是我的武器，写作是我记录成长的方式。
+          </p>
+          <p style={{fontFamily:"'Noto Sans SC'",lineHeight:2,fontSize:14,color:'rgba(242,238,238,0.8)'}}>
+            这个博客是我的数字花园，记录技术探索、产品思考和生活感悟。如果你觉得有价值，欢迎订阅。
+          </p>
+        </Section>
+        <Section title="联系方式">
+          <InfoRow label="邮箱" value="hello@xiaoliufeidao.dev"/>
+          <InfoRow label="GitHub" value="@xiaoliufeidao"/>
+          <InfoRow label="Twitter" value="@xlfeidao"/>
+        </Section>
+        <Section title="本站技术栈">
+          <div style={{display:'flex',flexWrap:'wrap',gap:8,marginTop:8}}>
+            {['React','TypeScript','Next.js','Tailwind CSS','Vercel','PlanetScale'].map(t=>(
+              <span key={t} style={{padding:'4px 10px',border:'1px solid rgba(200,21,10,0.4)',
+                fontFamily:"'Share Tech Mono',monospace",fontSize:11,color:'rgba(242,238,238,0.7)'}}>
+                {t}
+              </span>
+            ))}
+          </div>
+        </Section>
+      </div>
+    )
+  },
+  timeline: {
+    title:'Timeline',cn:'时间轴',color:'#cc1111',
+    content: () => (
+      <div>
+        <Section title="成长轨迹">
+          {[
+            {year:'2024',items:['发布独立产品 v2.0','技术博客访问量突破10万','开始学习 Rust']},
+            {year:'2023',items:['成为独立开发者','参与开源项目贡献','完成第一个 SaaS 产品']},
+            {year:'2022',items:['晋升高级工程师','主导重构核心系统','开始写技术博客']},
+            {year:'2021',items:['加入新公司','深入学习系统设计','读完50本书']},
+            {year:'2019',items:['正式踏入职场','第一行生产代码','学会了喝咖啡']},
+          ].map((t,i)=><TimelineYear key={i} {...t}/>)}
+        </Section>
+      </div>
+    )
+  },
+  links: {
+    title:'Friend Links',cn:'友链',color:'#cc1111',
+    content: () => (
+      <div>
+        <Section title="友情链接">
+          {[
+            {name:'代码与诗',url:'codeandpoetry.dev',desc:'全栈工程师的技术沉淀'},
+            {name:'像素工匠',url:'pixelcraft.io',desc:'专注交互设计与用户体验'},
+            {name:'深夜代码',url:'midnightcode.xyz',desc:'算法爱好者的刷题笔记'},
+            {name:'产品实验室',url:'productlab.cn',desc:'产品方法论与案例分析'},
+            {name:'数字游民',url:'digitalnomad.me',desc:'远程工作与生活方式探索'},
+          ].map((l,i)=><LinkCard key={i} {...l}/>)}
+        </Section>
+        <Section title="申请友链">
+          <p style={{fontFamily:"'Noto Sans SC'",fontSize:13,color:'rgba(242,238,238,0.6)',lineHeight:1.8}}>
+            欢迎互换友链！请确保您的博客有稳定更新，且内容原创。<br/>
+            申请方式：发邮件至 links@xiaoliufeidao.dev，附上您的博客信息即可。
+          </p>
+        </Section>
+      </div>
+    )
+  },
+  guestbook: {
+    title:'Guestbook',cn:'留言板',color:'#cc1111',
+    content: () => <GuestbookPage/>
+  },
+};
+
+/* ========= CONTENT PAGE INNER COMPONENTS ========= */
+const Section = ({title,children})=>(
+  <div style={{marginBottom:28}}>
+    <div style={{
+      fontFamily:"'Oswald',sans-serif",fontWeight:700,fontStyle:'italic',
+      fontSize:18,color:'white',letterSpacing:2,marginBottom:12,
+      borderLeft:'3px solid var(--red)',paddingLeft:10,
+      display:'flex',alignItems:'center',gap:8,
+    }}>
+      <span style={{color:'var(--red)'}}>◆</span> {title}
+    </div>
+    {children}
+  </div>
+);
+const InfoRow=({label,value})=>(
+  <div style={{display:'flex',gap:16,padding:'7px 0',borderBottom:'1px solid rgba(255,255,255,0.07)',
+    fontFamily:"'Noto Sans SC'",fontSize:13}}>
+    <span style={{color:'rgba(200,21,10,0.9)',fontWeight:700,minWidth:60}}>{label}</span>
+    <span style={{color:'rgba(242,238,238,0.85)'}}>{value}</span>
+  </div>
+);
+const SkillBar=({name,level})=>{
+  const [w,setW]=useState(0);
+  useEffect(()=>{const t=setTimeout(()=>setW(level),300);return()=>clearTimeout(t)},[level]);
+  return(
+    <div style={{marginBottom:10}}>
+      <div style={{display:'flex',justifyContent:'space-between',marginBottom:4,
+        fontFamily:"'Noto Sans SC'",fontSize:12,color:'rgba(242,238,238,0.7)'}}>
+        <span>{name}</span><span style={{color:'var(--red)',fontFamily:"'Share Tech Mono'"}}>{level}%</span>
+      </div>
+      <div style={{height:6,background:'rgba(255,255,255,0.08)',overflow:'hidden'}}>
+        <div style={{
+          height:'100%',width:`${w}%`,
+          background:'linear-gradient(90deg,var(--red),#ff4040)',
+          transition:'width 0.8s cubic-bezier(0.4,0,0.2,1)',
+          boxShadow:'0 0 8px rgba(200,21,10,0.5)',
+        }}/>
+      </div>
+    </div>
+  );
+};
+const TimeItem=({year,role,desc})=>(
+  <div style={{display:'flex',gap:16,padding:'8px 0',borderBottom:'1px solid rgba(255,255,255,0.06)'}}>
+    <span style={{fontFamily:"'Share Tech Mono'",fontSize:11,color:'var(--red)',minWidth:90}}>{year}</span>
+    <div>
+      <div style={{fontFamily:"'Noto Sans SC'",fontSize:13,fontWeight:700,color:'white'}}>{role}</div>
+      <div style={{fontFamily:"'Noto Sans SC'",fontSize:12,color:'rgba(242,238,238,0.5)',marginTop:2}}>{desc}</div>
+    </div>
+  </div>
+);
+const PostRow=({date,title,tag})=>(
+  <div style={{
+    display:'flex',alignItems:'center',gap:12,padding:'10px 12px',
+    marginBottom:6,background:'rgba(255,255,255,0.03)',
+    border:'1px solid rgba(255,255,255,0.06)',cursor:'pointer',
+    transition:'all 0.15s',
+  }}
+  onMouseEnter={e=>{e.currentTarget.style.background='rgba(200,21,10,0.1)';e.currentTarget.style.borderColor='rgba(200,21,10,0.3)'}}
+  onMouseLeave={e=>{e.currentTarget.style.background='rgba(255,255,255,0.03)';e.currentTarget.style.borderColor='rgba(255,255,255,0.06)'}}>
+    <span style={{fontFamily:"'Share Tech Mono'",fontSize:11,color:'rgba(200,21,10,0.8)',minWidth:80}}>{date}</span>
+    <span style={{fontFamily:"'Noto Sans SC'",fontSize:13,flex:1,color:'rgba(242,238,238,0.9)'}}>{title}</span>
+    <span style={{fontSize:10,padding:'2px 8px',border:'1px solid rgba(200,21,10,0.4)',
+      fontFamily:"'Share Tech Mono'",color:'rgba(200,21,10,0.8)'}}>{tag}</span>
+  </div>
+);
+const FrameCard=({num,title,desc})=>(
+  <div style={{display:'flex',gap:14,padding:'12px 14px',marginBottom:8,
+    border:'1px solid rgba(200,21,10,0.2)',background:'rgba(200,21,10,0.05)',
+    clipPath:'polygon(0 0,100% 0,99% 100%,1% 100%)'}}>
+    <div style={{fontFamily:"'Bebas Neue'",fontSize:28,color:'rgba(200,21,10,0.4)',lineHeight:1,minWidth:32}}>{num}</div>
+    <div>
+      <div style={{fontFamily:"'Noto Sans SC'",fontSize:14,fontWeight:700,color:'white',marginBottom:4}}>{title}</div>
+      <div style={{fontFamily:"'Noto Sans SC'",fontSize:12,color:'rgba(242,238,238,0.55)',lineHeight:1.6}}>{desc}</div>
+    </div>
+  </div>
+);
+const DiaryEntry=({date,title,mood,text})=>(
+  <div style={{marginBottom:16,padding:'14px 16px',
+    border:'1px solid rgba(255,255,255,0.07)',
+    background:'rgba(255,255,255,0.02)'}}>
+    <div style={{display:'flex',alignItems:'center',gap:10,marginBottom:8}}>
+      <span style={{fontSize:18}}>{mood}</span>
+      <span style={{fontFamily:"'Share Tech Mono'",fontSize:11,color:'var(--red)'}}>{date}</span>
+      <span style={{fontFamily:"'Noto Sans SC'",fontSize:13,fontWeight:700,color:'white'}}>{title}</span>
+    </div>
+    <p style={{fontFamily:"'Noto Sans SC'",fontSize:12,color:'rgba(242,238,238,0.6)',lineHeight:1.8}}>{text}</p>
+  </div>
+);
+const TimelineYear=({year,items})=>(
+  <div style={{display:'flex',gap:20,marginBottom:20}}>
+    <div style={{
+      fontFamily:"'Bebas Neue'",fontSize:32,color:'var(--red)',
+      minWidth:56,lineHeight:1,paddingTop:2,
+    }}>{year}</div>
+    <div style={{borderLeft:'2px solid rgba(200,21,10,0.3)',paddingLeft:20,flex:1}}>
+      {items.map((item,i)=>(
+        <div key={i} style={{
+          padding:'6px 0',borderBottom:'1px solid rgba(255,255,255,0.05)',
+          fontFamily:"'Noto Sans SC'",fontSize:13,color:'rgba(242,238,238,0.75)',
+          display:'flex',alignItems:'center',gap:8,
+        }}>
+          <span style={{color:'var(--red)',fontSize:8}}>◆</span>{item}
+        </div>
+      ))}
+    </div>
+  </div>
+);
+const LinkCard=({name,url,desc})=>(
+  <div style={{
+    display:'flex',alignItems:'center',gap:14,padding:'12px 14px',marginBottom:6,
+    border:'1px solid rgba(255,255,255,0.08)',background:'rgba(255,255,255,0.02)',
+    cursor:'pointer',transition:'all 0.15s',
+  }}
+  onMouseEnter={e=>{e.currentTarget.style.background='rgba(200,21,10,0.1)';e.currentTarget.style.borderColor='rgba(200,21,10,0.4)'}}
+  onMouseLeave={e=>{e.currentTarget.style.background='rgba(255,255,255,0.02)';e.currentTarget.style.borderColor='rgba(255,255,255,0.08)'}}>
+    <div style={{
+      width:36,height:36,background:'rgba(200,21,10,0.2)',
+      display:'flex',alignItems:'center',justifyContent:'center',flexShrink:0,
+      fontFamily:"'Bebas Neue'",fontSize:16,color:'var(--red)',
+    }}>{name[0]}</div>
+    <div style={{flex:1}}>
+      <div style={{fontFamily:"'Noto Sans SC'",fontSize:13,fontWeight:700,color:'white'}}>{name}</div>
+      <div style={{fontFamily:"'Share Tech Mono'",fontSize:10,color:'rgba(200,21,10,0.7)'}}>{url}</div>
+    </div>
+    <div style={{fontFamily:"'Noto Sans SC'",fontSize:12,color:'rgba(242,238,238,0.4)'}}>{desc}</div>
+  </div>
+);
+
+const GuestbookPage = () => {
+  const [msgs, setMsgs] = useState([
+    {name:'Ryuji',text:'这个博客太帅了！内容也很有深度。',date:'2024.12.01'},
+    {name:'Ann',text:'产品思考那篇文章对我帮助很大，谢谢分享！',date:'2024.11.28'},
+    {name:'Futaba',text:'技术博客的质量很高，已订阅！',date:'2024.11.15'},
+  ]);
+  const [name,setName]=useState('');
+  const [text,setText]=useState('');
+  const submit=()=>{
+    if(!name.trim()||!text.trim())return;
+    setMsgs([{name,text,date:'2024.12.10'},...msgs]);
+    setName('');setText('');
+  };
+  const inputStyle={
+    background:'rgba(255,255,255,0.04)',border:'1px solid rgba(255,255,255,0.12)',
+    color:'white',padding:'8px 12px',fontFamily:"'Noto Sans SC',sans-serif",
+    fontSize:13,outline:'none',transition:'border-color 0.15s',width:'100%',
+  };
+  return (
+    <div>
+      <Section title="留言">
+        <div style={{marginBottom:16}}>
+          <input value={name} onChange={e=>setName(e.target.value)} placeholder="你的名字"
+            style={{...inputStyle,marginBottom:8,display:'block'}}
+            onFocus={e=>e.target.style.borderColor='rgba(200,21,10,0.6)'}
+            onBlur={e=>e.target.style.borderColor='rgba(255,255,255,0.12)'}/>
+          <textarea value={text} onChange={e=>setText(e.target.value)} placeholder="留下你的想法…"
+            rows={3}
+            style={{...inputStyle,resize:'vertical',marginBottom:8,display:'block'}}
+            onFocus={e=>e.target.style.borderColor='rgba(200,21,10,0.6)'}
+            onBlur={e=>e.target.style.borderColor='rgba(255,255,255,0.12)'}/>
+          <button onClick={submit} style={{
+            background:'var(--red)',border:'none',color:'white',
+            padding:'8px 24px',fontFamily:"'Oswald',sans-serif",fontWeight:700,
+            fontSize:14,letterSpacing:2,cursor:'pointer',
+            clipPath:'polygon(0 0,100% 0,97% 100%,3% 100%)',
+            transition:'all 0.15s',
+          }}
+          onMouseEnter={e=>e.currentTarget.style.background='var(--red2)'}
+          onMouseLeave={e=>e.currentTarget.style.background='var(--red)'}>
+            SEND ›
+          </button>
+        </div>
+      </Section>
+      <Section title="留言记录">
+        {msgs.map((m,i)=>(
+          <div key={i} style={{padding:'12px 14px',marginBottom:8,
+            border:'1px solid rgba(255,255,255,0.07)',background:'rgba(255,255,255,0.02)'}}>
+            <div style={{display:'flex',gap:10,marginBottom:6}}>
+              <span style={{fontFamily:"'Oswald',sans-serif",fontWeight:700,fontSize:14,color:'white'}}>{m.name}</span>
+              <span style={{fontFamily:"'Share Tech Mono'",fontSize:10,color:'rgba(200,21,10,0.7)',marginTop:3}}>{m.date}</span>
+            </div>
+            <p style={{fontFamily:"'Noto Sans SC'",fontSize:13,color:'rgba(242,238,238,0.7)',lineHeight:1.7}}>{m.text}</p>
+          </div>
+        ))}
+      </Section>
+    </div>
+  );
+};
+
+/* ========= ARTICLE COMPONENTS ========= */
+const articlePages = ['techblog','product','diary'];
+
+const ArticleTag = ({label}) => (
+  <span style={{
+    display:'inline-block',
+    background:'linear-gradient(90deg,#cc170b 0%,#a60f06 100%)',
+    color:'white',
+    fontFamily:"'Noto Sans SC'",
+    fontSize:11,
+    fontWeight:700,
+    padding:'4px 14px',
+    marginBottom:12,
+    letterSpacing:1,
+    border:'1px solid rgba(255,255,255,0.55)',
+    transform:'skewX(-8deg)',
+    boxShadow:'3px 3px 0 #0c0909',
+  }}>
+    <span style={{display:'inline-block',transform:'skewX(8deg)'}}>{label}</span>
+  </span>
+);
+const ArticleH1 = ({children}) => (
+  <h1 style={{
+    fontFamily:"'Noto Sans SC',sans-serif",
+    fontWeight:900,
+    fontSize:'clamp(28px,4vw,54px)',
+    lineHeight:1.2,
+    color:'#090909',
+    marginBottom:14,
+    textWrap:'pretty',
+  }}>{children}</h1>
+);
+const ArticleMeta = ({date,author,category,readTime}) => (
+  <div style={{
+    display:'flex',
+    gap:18,
+    flexWrap:'wrap',
+    alignItems:'center',
+    fontFamily:"'Noto Sans SC'",
+    fontSize:13,
+    color:'rgba(12,12,12,0.66)',
+    borderBottom:'1px solid rgba(10,10,10,0.18)',
+    paddingBottom:14,
+    marginBottom:18,
+  }}>
+    <span>◷ {date}</span>
+    <span>✦ {author}</span>
+    <span>▣ {category}</span>
+    <span>⏱ {readTime}</span>
+  </div>
+);
+const ArticleSection = ({num,title}) => (
+  <div style={{
+    display:'inline-flex',
+    alignItems:'center',
+    background:'linear-gradient(90deg,#cf1a0e 0%,#b30f07 78%,#131010 78%,#131010 100%)',
+    color:'white',
+    fontFamily:"'Noto Sans SC'",
+    fontWeight:800,
+    fontSize:18,
+    padding:'6px 20px 7px 12px',
+    margin:'18px 0 10px',
+    letterSpacing:0.5,
+    clipPath:'polygon(0 0,100% 0,96% 100%,0 100%)',
+    boxShadow:'2px 2px 0 #0d0909',
+  }}>
+    {num}. {title}
+  </div>
+);
+const ArticleP = ({children,style={}}) => (
+  <p style={{
+    fontFamily:"'Noto Sans SC'",
+    fontSize:15.5,
+    lineHeight:1.95,
+    color:'rgba(10,10,10,0.86)',
+    marginBottom:14,
+    ...style,
+  }}>{children}</p>
+);
+const ABlockquote = ({text,by}) => (
+  <div style={{
+    margin:'20px 0',
+    padding:'16px 24px',
+    background:'#090909',
+    borderLeft:'5px solid var(--red)',
+    color:'white',
+    clipPath:'polygon(2% 0,100% 0,97% 100%,0 100%)',
+    position:'relative',
+  }}>
+    <span style={{
+      position:'absolute',
+      top:-6,
+      left:14,
+      fontFamily:'Georgia,serif',
+      fontSize:54,
+      color:'var(--red)',
+      lineHeight:1,
+      userSelect:'none',
+    }}>"</span>
+    <p style={{
+      fontFamily:"'Noto Sans SC'",
+      fontSize:16.5,
+      color:'rgba(255,255,255,0.92)',
+      lineHeight:1.8,
+      marginBottom:by?6:0,
+      paddingLeft:34,
+    }}>{text}</p>
+    {by && <p style={{
+      fontFamily:"'Oswald'",
+      fontSize:12,
+      color:'rgba(255,255,255,0.82)',
+      letterSpacing:2,
+      textAlign:'right',
+    }}>— {by}</p>}
+  </div>
+);
+const ABulletList = ({items}) => (
+  <ul style={{listStyle:'none',padding:0,margin:'8px 0 16px'}}>
+    {items.map((item,i)=>(
+      <li key={i} style={{
+        display:'flex',
+        gap:10,
+        alignItems:'flex-start',
+        padding:'3px 0',
+        fontFamily:"'Noto Sans SC'",
+        fontSize:15.5,
+        color:'rgba(10,10,10,0.86)',
+        lineHeight:1.8,
+      }}>
+        <span style={{color:'var(--red)',fontSize:15,lineHeight:1.5,flexShrink:0}}>▶</span>
+        <span>{item}</span>
+      </li>
+    ))}
+  </ul>
+);
+
+/* ========= ARTICLE SIDEBAR ========= */
+const SidebarLabel = ({title}) => (
+  <div style={{position:'absolute',top:-16,left:10,display:'flex',alignItems:'center',gap:6}}>
+    <span style={{
+      width:24,height:24,
+      display:'flex',alignItems:'center',justifyContent:'center',
+      background:'#0a0909',border:'2px solid white',color:'white',fontSize:12,
+      boxShadow:'0 0 0 2px var(--red)',
+    }}>✶</span>
+    <div style={{
+      background:'#070707',
+      border:'2px solid white',
+      color:'white',
+      fontFamily:"'Noto Sans SC'",
+      fontWeight:800,
+      fontSize:17,
+      letterSpacing:1,
+      padding:'5px 16px 6px',
+      clipPath:'polygon(0 0,100% 0,96% 100%,0 100%)',
+    }}>{title}</div>
+  </div>
+);
+
+const SidebarCard = ({title,children}) => (
+  <div style={{
+    position:'relative',
+    background:'radial-gradient(circle at 1px 1px, rgba(255,255,255,0.06) 1px, transparent 0) 0 0 / 8px 8px, rgba(6,6,6,0.92)',
+    border:'2px solid rgba(255,255,255,0.92)',
+    boxShadow:'4px 4px 0 rgba(200,21,10,0.42)',
+    padding:'32px 16px 14px',
+  }}>
+    <SidebarLabel title={title}/>
+    {children}
+  </div>
+);
+
+const Sidebar = () => {
+  const cats=[
+    {name:'全部文章',count:18,active:true},
+    {name:'技术博客',count:10},
+    {name:'产品思考',count:4},
+    {name:'个人日志',count:4},
+  ];
+  const recents=[
+    {title:'P5R 风格的个人博客搭建指南',date:'05-20',active:true},
+    {title:'用 Astro 构建高性能站点',date:'05-15'},
+    {title:'设计思维在产品中的应用',date:'05-10'},
+    {title:'那些年踩过的坑',date:'05-05'},
+    {title:'我的 2024 年度总结',date:'04-30'},
+  ];
+
+  return (
+    <div style={{
+      flex:'0 1 clamp(248px,23vw,320px)',
+      width:'clamp(248px,23vw,320px)',
+      display:'flex',
+      flexDirection:'column',
+      gap:16,
+    }}>
+      <SidebarCard title="关于我">
+        <div style={{display:'flex',flexDirection:'column',alignItems:'center',gap:10}}>
+          <div style={{
+            width:104,height:104,borderRadius:'50%',
+            border:'3px solid rgba(255,255,255,0.9)',overflow:'hidden',
+            boxShadow:'0 0 0 3px rgba(200,21,10,0.7)',
+          }}>
+            <img src="images/bg/hero-bg.png" style={{width:'100%',height:'100%',objectFit:'cover'}}/>
+          </div>
+          <div style={{textAlign:'center'}}>
+            <div style={{fontFamily:"'Noto Sans SC'",fontWeight:800,fontSize:28,color:'white'}}>小柳飞刀</div>
+            <div style={{fontFamily:"'Noto Sans SC'",fontSize:14,color:'rgba(255,255,255,0.75)',marginTop:6,lineHeight:1.65}}>
+              以代码为刃，斩断无题的现实。
+            </div>
+          </div>
+          <div style={{display:'flex',gap:14,paddingTop:4}}>
+            {[NavIcons.github,NavIcons.twitter,NavIcons.linkedin,NavIcons.mail].map((ic,i)=>(
+              <a key={i} href="#" style={{color:'rgba(255,255,255,0.68)',display:'flex',transition:'color 0.15s'}}
+                onMouseEnter={e=>e.currentTarget.style.color='var(--red)'}
+                onMouseLeave={e=>e.currentTarget.style.color='rgba(255,255,255,0.68)'}>
+                {ic}
+              </a>
+            ))}
+          </div>
+        </div>
+      </SidebarCard>
+
+      <SidebarCard title="分类">
+        <div style={{display:'flex',flexDirection:'column',gap:8}}>
+          {cats.map((c,i)=>(
+            <div key={i} style={{
+              display:'flex',justifyContent:'space-between',alignItems:'center',
+              padding:'4px 2px',cursor:'pointer',
+              borderBottom:'1px solid rgba(255,255,255,0.12)',
+            }}>
+              <span style={{
+                fontFamily:"'Noto Sans SC'",
+                fontSize:14,
+                color:c.active?'var(--red)':'rgba(255,255,255,0.88)',
+                display:'flex',alignItems:'center',gap:6,
+              }}>
+                <span style={{color:'var(--red)',fontSize:10}}>▶</span>{c.name}
+              </span>
+              <span style={{fontFamily:"'Share Tech Mono'",fontSize:13,color:'rgba(255,255,255,0.74)'}}>{c.count}</span>
+            </div>
+          ))}
+        </div>
+      </SidebarCard>
+
+      <SidebarCard title="最新文章">
+        <div style={{display:'flex',flexDirection:'column',gap:7}}>
+          {recents.map((r,i)=>(
+            <div key={i} style={{
+              display:'flex',justifyContent:'space-between',gap:8,cursor:'pointer',
+              borderBottom:'1px solid rgba(255,255,255,0.1)',paddingBottom:6,
+            }}>
+              <span style={{
+                fontFamily:"'Noto Sans SC'",
+                fontSize:13,
+                color:r.active?'var(--red)':'rgba(255,255,255,0.87)',
+                lineHeight:1.55,
+                display:'flex',gap:5,
+              }}>
+                {r.active && <span style={{color:'var(--red)'}}>›</span>}{r.title}
+              </span>
+              <span style={{fontFamily:"'Share Tech Mono'",fontSize:12,color:'rgba(255,255,255,0.72)',flexShrink:0}}>{r.date}</span>
+            </div>
+          ))}
+        </div>
+      </SidebarCard>
+    </div>
+  );
+};
+
+/* ========= PROFILE PAGE ========= */
+const ProfileContent = ({ darkMode }) => {
+  const stats = [
+    {name:'知识',en:'Knowledge',val:8,desc:'持续学习，保持好奇心，构建自己的知识体系。',angle:-90},
+    {name:'勇气',en:'Guts',val:8,desc:'敢于尝试，勇于挑战，在不确定中前进。',angle:-18},
+    {name:'灵巧',en:'Proficiency',val:9,desc:'专注打磨，追求极致，让想法成为现实。',angle:54},
+    {name:'体贴',en:'Kindness',val:7,desc:'换位思考，乐于分享，让技术更有温度。',angle:126},
+    {name:'魅力',en:'Charm',val:7,desc:'真诚待人，善于沟通，连接更多的可能性。',angle:198},
+  ];
+  const cx=170,cy=160,R=118;
+  const rad=d=>d*Math.PI/180;
+  const pt=(v,a)=>[cx+(v/10)*R*Math.cos(rad(a)),cy+(v/10)*R*Math.sin(rad(a))];
+  const polyStr=pts=>pts.map(p=>`${p[0].toFixed(1)},${p[1].toFixed(1)}`).join(' ');
+  const outerPts=stats.map(s=>pt(10,s.angle));
+  const valPts=stats.map(s=>pt(s.val,s.angle));
+  const labelPt=(a)=>pt(13.2,a);
+
+  const hobbies=[
+    {emoji:'🎮',name:'游戏',sub:'JRPG / ACT'},
+    {emoji:'📖',name:'阅读',sub:'科幻 / 历史'},
+    {emoji:'🎧',name:'音乐',sub:'摇滚 / J-Rock'},
+    {emoji:'📷',name:'摄影',sub:'记录生活'},
+    {emoji:'☕',name:'咖啡',sub:'深度依赖'},
+  ];
+  const techStack=[
+    {name:'Astro',color:'#FF5D01',letter:'A'},
+    {name:'React',color:'#61DAFB',letter:'⚛'},
+    {name:'TypeScript',color:'#3178C6',letter:'TS'},
+    {name:'Tailwind CSS',color:'#38BDF8',letter:'W'},
+    {name:'Node.js',color:'#68A063',letter:'N'},
+    {name:'MongoDB',color:'#4DB33D',letter:'M'},
+  ];
+
+  return (
+    <div style={{width:'100%',height:'100%',display:'flex',overflow:'hidden'}}>
+
+      {/* ── LEFT ── */}
+      <div style={{width:'42%',flexShrink:0,display:'flex',flexDirection:'column',
+        position:'relative',overflow:'hidden',borderRight:'2px solid var(--red)'}}>
+        {/* character bg */}
+        <img src="images/bg/hero-bg.png" style={{
+          position:'absolute',bottom:0,left:'5%',height:'88%',width:'auto',
+          objectFit:'contain',objectPosition:'bottom',opacity:0.45,
+          filter:'drop-shadow(0 0 30px rgba(200,21,10,0.5))',
+          pointerEvents:'none',zIndex:0,
+        }}/>
+        <div style={{position:'absolute',inset:0,zIndex:1,pointerEvents:'none',
+          background:'linear-gradient(160deg,rgba(5,1,1,0.78) 0%,rgba(5,1,1,0.5) 60%,rgba(5,1,1,0.85) 100%)'}}/>
+
+        <div style={{position:'relative',zIndex:2,padding:'14px 18px',display:'flex',flexDirection:'column',height:'100%',overflowY:'auto'}}>
+
+          {/* Title */}
+          <div style={{display:'flex',alignItems:'center',gap:12,marginBottom:12}}>
+            <img src="images/icons/icon1.png" style={{width:54,height:54,objectFit:'contain',flexShrink:0}}/>
+            <div style={{flex:1}}>
+              <div style={{fontFamily:"'Noto Sans SC',sans-serif",fontWeight:900,fontSize:30,color:'white',
+                lineHeight:1,textShadow:'2px 2px 0 var(--red)'}}>关于我</div>
+              <div style={{fontFamily:"'Bebas Neue',sans-serif",fontSize:13,letterSpacing:8,
+                color:'rgba(255,255,255,0.4)',marginTop:2}}>ABOUT ME</div>
+            </div>
+            <img src="images/icons/icon2.png" style={{width:30,height:30,objectFit:'contain',filter:'invert(1)',opacity:0.55}}/>
+          </div>
+
+          {/* Info card */}
+          <div style={{border:'2px solid rgba(255,255,255,0.72)',background:'rgba(5,1,1,0.9)',
+            padding:'12px 16px',marginBottom:10,
+            clipPath:'polygon(0 0,100% 0,100% calc(100% - 12px),calc(100% - 12px) 100%,0 100%)'}}>
+            <div style={{fontFamily:"'Noto Sans SC'",fontWeight:900,fontSize:18,color:'white',marginBottom:4}}>小柳飞刀</div>
+            <span style={{display:'inline-block',background:'var(--red)',color:'white',
+              fontFamily:"'Noto Sans SC'",fontSize:10,fontWeight:700,
+              padding:'2px 12px',marginBottom:8,letterSpacing:0.5,
+              clipPath:'polygon(0 0,100% 0,95% 100%,5% 100%)'}}>全栈开发者 / 技术探索者</span>
+            <p style={{fontFamily:"'Noto Sans SC'",fontSize:11,color:'rgba(242,238,238,0.55)',marginBottom:10,lineHeight:1.7}}>
+              以代码为刃，斩断无题的现实。
+            </p>
+            {[{e:'📍',v:'上海'},{e:'🎂',v:'05 / 20'},{e:'✉️',v:'hello@xiaoliufeidao.com'},{e:'🔗',v:'https://xiaoliufeidao.com'}]
+              .map((r,i)=>(
+              <div key={i} style={{display:'flex',gap:10,alignItems:'center',
+                padding:'4px 0',borderBottom:'1px solid rgba(255,255,255,0.05)',
+                fontFamily:"'Share Tech Mono',monospace",fontSize:10.5,color:'rgba(242,238,238,0.7)'}}>
+                <span style={{fontSize:11,flexShrink:0}}>{r.e}</span>
+                <span style={{color:'rgba(242,238,238,0.88)'}}>{r.v}</span>
+              </div>
+            ))}
+          </div>
+
+          {/* Quote */}
+          <div style={{borderLeft:'3px solid var(--red)',padding:'8px 14px',
+            background:'rgba(200,21,10,0.07)',marginBottom:10,position:'relative'}}>
+            <span style={{position:'absolute',top:-5,left:6,fontFamily:'Georgia',
+              fontSize:36,color:'rgba(200,21,10,0.28)',lineHeight:1,userSelect:'none'}}>"</span>
+            <p style={{fontFamily:"'Noto Sans SC'",fontSize:11.5,color:'rgba(242,238,238,0.85)',
+              lineHeight:1.85,marginBottom:4}}>去追求的不是被认可，<br/>而是颠覆常规的自由。</p>
+            <p style={{fontFamily:"'Oswald'",fontSize:11,color:'rgba(200,21,10,0.85)',letterSpacing:3}}>— JOKER</p>
+            <span style={{position:'absolute',bottom:-4,right:8,fontFamily:'Georgia',
+              fontSize:36,color:'rgba(200,21,10,0.28)',lineHeight:1,userSelect:'none'}}>"</span>
+          </div>
+
+          {/* TAKE YOUR HEART */}
+          <div style={{fontFamily:"'Bebas Neue',sans-serif",fontSize:18,color:'white',
+            letterSpacing:3,textShadow:'2px 2px 0 var(--red)',marginBottom:10}}>
+            TAKE Y<span style={{color:'var(--red)'}}>O</span>UR HE<span style={{color:'var(--red)'}}>★</span>RT
+          </div>
+
+          {/* Hobbies */}
+          <div style={{marginTop:'auto'}}>
+            <div style={{display:'flex',alignItems:'center',gap:8,marginBottom:8,
+              borderBottom:'1px solid rgba(200,21,10,0.3)',paddingBottom:5}}>
+              <img src="images/icons/icon2.png" style={{width:16,height:16,objectFit:'contain',filter:'invert(1)'}}/>
+              <span style={{fontFamily:"'Oswald',sans-serif",fontWeight:700,fontStyle:'italic',
+                fontSize:13,color:'white',letterSpacing:2}}>兴趣爱好</span>
+            </div>
+            <div style={{display:'flex',gap:6}}>
+              {hobbies.map((h,i)=>(
+                <div key={i} style={{flex:1,display:'flex',flexDirection:'column',alignItems:'center',
+                  gap:4,padding:'8px 4px',border:'1px solid rgba(255,255,255,0.14)',
+                  background:'rgba(255,255,255,0.03)',cursor:'pointer',transition:'all 0.15s'}}
+                  onMouseEnter={e=>{e.currentTarget.style.background='rgba(200,21,10,0.18)';e.currentTarget.style.borderColor='rgba(200,21,10,0.5)'}}
+                  onMouseLeave={e=>{e.currentTarget.style.background='rgba(255,255,255,0.03)';e.currentTarget.style.borderColor='rgba(255,255,255,0.14)'}}>
+                  <span style={{fontSize:20}}>{h.emoji}</span>
+                  <span style={{fontFamily:"'Noto Sans SC'",fontSize:10,fontWeight:700,color:'white'}}>{h.name}</span>
+                  <span style={{fontFamily:"'Share Tech Mono'",fontSize:8,color:'rgba(200,21,10,0.75)',textAlign:'center',lineHeight:1.3}}>{h.sub}</span>
+                </div>
+              ))}
+            </div>
+          </div>
+        </div>
+      </div>
+
+      {/* ── RIGHT ── */}
+      <div style={{flex:1,overflowY:'auto',padding:'16px 22px',display:'flex',flexDirection:'column',gap:16}}>
+
+        {/* PERSONA STATUS */}
+        <div style={{border:'2px solid rgba(255,255,255,0.7)',background:'rgba(5,1,1,0.9)',
+          padding:'14px 18px',
+          clipPath:'polygon(0 0,100% 0,100% calc(100% - 14px),calc(100% - 14px) 100%,0 100%)'}}>
+          <div style={{display:'flex',alignItems:'flex-start',gap:16,marginBottom:14,
+            borderBottom:'1px solid rgba(200,21,10,0.3)',paddingBottom:10}}>
+            <div>
+              <div style={{fontFamily:"'Noto Sans SC'",fontWeight:700,fontSize:15,color:'white',letterSpacing:2}}>五维属性</div>
+              <div style={{fontFamily:"'Bebas Neue'",fontSize:10,letterSpacing:6,color:'rgba(200,21,10,0.8)'}}>PERSONA STATUS</div>
+            </div>
+            <p style={{fontFamily:"'Noto Sans SC'",fontSize:11,color:'rgba(242,238,238,0.42)',lineHeight:1.8,marginLeft:8}}>
+              P5R 中的五维代表了怪盗的潜力，<br/>也是我不断提升的方向。
+            </p>
+          </div>
+
+          <div style={{display:'flex',gap:16,alignItems:'flex-start'}}>
+            {/* SVG radar */}
+            <svg width="340" height="320" viewBox="-10 -30 360 360" style={{flexShrink:0}}>
+              {/* Grid rings */}
+              {[2,4,6,8,10].map(lv=>(
+                <polygon key={lv} points={polyStr(stats.map(s=>pt(lv,s.angle)))}
+                  fill="none"
+                  stroke={lv===10?'rgba(255,255,255,0.35)':'rgba(255,255,255,0.1)'}
+                  strokeWidth={lv===10?1.5:0.7}/>
+              ))}
+              {/* Axis lines */}
+              {stats.map((s,i)=>{const o=pt(10,s.angle);return(
+                <line key={i} x1={cx} y1={cy} x2={o[0]} y2={o[1]}
+                  stroke="rgba(255,255,255,0.14)" strokeWidth="0.8"/>
+              )})}
+              {/* Filled polygon */}
+              <polygon points={polyStr(valPts)}
+                fill="rgba(200,21,10,0.32)" stroke="rgba(220,30,15,1)" strokeWidth="2.5"/>
+              {/* Dots */}
+              {valPts.map((p,i)=>(
+                <circle key={i} cx={p[0]} cy={p[1]} r="4.5" fill="var(--red)" stroke="white" strokeWidth="1.5"/>
+              ))}
+              {/* Labels */}
+              {stats.map((s,i)=>{
+                const lp=labelPt(s.angle);
+                const anchor=s.angle>-20&&s.angle<60?'start':s.angle>120&&s.angle<180?'end':'middle';
+                return(
+                  <g key={i}>
+                    <text x={lp[0]} y={lp[1]-5} textAnchor={anchor}
+                      fontFamily="'Noto Sans SC',sans-serif" fontWeight="700" fontSize="11.5" fill="white">{s.name}</text>
+                    <text x={lp[0]} y={lp[1]+9} textAnchor={anchor}
+                      fontFamily="'Share Tech Mono',monospace" fontSize="9" fill="rgba(200,21,10,0.9)">{s.en}  {s.val}</text>
+                  </g>
+                );
+              })}
+            </svg>
+
+            {/* Stat descriptions */}
+            <div style={{flex:1,display:'flex',flexDirection:'column',gap:8}}>
+              {stats.map((s,i)=>(
+                <div key={i} style={{display:'flex',gap:10,padding:'7px 10px',
+                  background:'rgba(255,255,255,0.02)',
+                  borderLeft:`3px solid rgba(200,21,10,${0.4+s.val*0.06})`}}>
+                  <div style={{minWidth:68,flexShrink:0}}>
+                    <div style={{fontFamily:"'Noto Sans SC'",fontWeight:700,fontSize:12,color:'white'}}>{s.name} <span style={{color:'var(--red)',fontFamily:"'Share Tech Mono'",fontSize:12}}>{s.val}</span></div>
+                    <div style={{fontFamily:"'Share Tech Mono'",fontSize:8.5,color:'rgba(200,21,10,0.65)',letterSpacing:1}}>{s.en}</div>
+                  </div>
+                  <div style={{fontFamily:"'Noto Sans SC'",fontSize:11,color:'rgba(242,238,238,0.5)',lineHeight:1.7}}>{s.desc}</div>
+                </div>
+              ))}
+            </div>
+          </div>
+        </div>
+
+        {/* TECH STACK */}
+        <div style={{border:'2px solid rgba(255,255,255,0.7)',background:'rgba(5,1,1,0.9)',
+          padding:'14px 18px',position:'relative',
+          clipPath:'polygon(0 0,100% 0,100% calc(100% - 14px),calc(100% - 14px) 100%,0 100%)'}}>
+          <div style={{display:'flex',alignItems:'center',gap:10,marginBottom:14,
+            borderBottom:'1px solid rgba(200,21,10,0.3)',paddingBottom:8}}>
+            <img src="images/icons/icon2.png" style={{width:20,height:20,objectFit:'contain',filter:'invert(1)'}}/>
+            <span style={{fontFamily:"'Noto Sans SC'",fontWeight:700,fontSize:15,color:'white',letterSpacing:2}}>技术栈</span>
+          </div>
+          <div style={{display:'flex',gap:10,flexWrap:'wrap',marginBottom:12}}>
+            {techStack.map((t,i)=>(
+              <div key={i} style={{display:'flex',flexDirection:'column',alignItems:'center',gap:6,
+                padding:'12px 8px',minWidth:72,
+                border:'1px solid rgba(255,255,255,0.1)',background:'rgba(255,255,255,0.03)',
+                cursor:'pointer',transition:'all 0.15s'}}
+                onMouseEnter={e=>{e.currentTarget.style.background=t.color+'18';e.currentTarget.style.borderColor=t.color+'66'}}
+                onMouseLeave={e=>{e.currentTarget.style.background='rgba(255,255,255,0.03)';e.currentTarget.style.borderColor='rgba(255,255,255,0.1)'}}>
+                <div style={{width:42,height:42,borderRadius:8,
+                  background:t.color+'20',border:`1.5px solid ${t.color}55`,
+                  display:'flex',alignItems:'center',justifyContent:'center',
+                  fontFamily:"'Bebas Neue',sans-serif",fontSize:14,color:t.color,letterSpacing:1}}>
+                  {t.letter}
+                </div>
+                <span style={{fontFamily:"'Share Tech Mono',monospace",fontSize:9,
+                  color:'rgba(242,238,238,0.65)',textAlign:'center'}}>{t.name}</span>
+              </div>
+            ))}
+          </div>
+          <div style={{fontFamily:"'Noto Sans SC'",fontSize:11.5,color:'rgba(242,238,238,0.4)',
+            borderTop:'1px solid rgba(200,21,10,0.12)',paddingTop:8}}>
+            持续探索新技术，让代码更优雅，让产品更有价值。
+          </div>
+          <div style={{position:'absolute',right:16,bottom:12,opacity:0.35,transform:'rotate(-15deg)'}}>
+            <img src="images/icons/icon5.png" style={{width:36,filter:'invert(1)'}}/>
+          </div>
+        </div>
+      </div>
+    </div>
+  );
+};
+
+/* ========= CONTENT PAGE WRAPPER ========= */
+const ContentPage = ({ pageId, onBack, darkMode }) => {
+  const data = contentData[pageId];
+  if(!data) return null;
+
+  // Profile gets its own full layout
+  if (pageId === 'profile') {
+    return (
+      <div style={{position:'fixed',inset:0,zIndex:50,paddingTop:54,paddingBottom:44,
+        display:'flex',flexDirection:'column',animation:'fadeIn 0.22s ease'}}>
+        <div style={{flexShrink:0,height:36,display:'flex',alignItems:'center',
+          padding:'0 20px',gap:14,
+          background: darkMode ? 'rgba(8,3,3,0.92)' : 'rgba(240,228,225,0.95)',
+          borderBottom:'1px solid rgba(200,21,10,0.3)'}}>
+          <button onClick={onBack}
+            style={{background:'none',border:'1px solid rgba(200,21,10,0.5)',
+              color:'rgba(200,21,10,0.8)',cursor:'pointer',padding:'3px 12px',
+              fontFamily:"'Oswald',sans-serif",fontSize:12,letterSpacing:1,transition:'all 0.15s'}}
+            onMouseEnter={e=>{e.currentTarget.style.background='var(--red)';e.currentTarget.style.color='white'}}
+            onMouseLeave={e=>{e.currentTarget.style.background='none';e.currentTarget.style.color='rgba(200,21,10,0.8)'}}>
+            ← BACK
+          </button>
+          <span style={{fontFamily:"'Oswald',sans-serif",fontWeight:700,fontStyle:'italic',fontSize:16,color:'white',letterSpacing:2}}>Profile</span>
+          <span style={{fontFamily:"'Noto Sans SC'",fontSize:11,color:'rgba(200,21,10,0.9)',
+            background:'rgba(200,21,10,0.12)',padding:'2px 10px',border:'1px solid rgba(200,21,10,0.3)'}}>个人简历</span>
+        </div>
+        <div style={{flex:1,overflow:'hidden'}}>
+          <ProfileContent darkMode={darkMode}/>
+        </div>
+      </div>
+    );
+  }
+  const isArticle = articlePages.includes(pageId);
+
+  if (isArticle) {
+    return (
+      <div style={{
+        position:'fixed',inset:0,zIndex:50,
+        paddingTop:54,paddingBottom:44,
+        animation:'fadeIn 0.22s ease',
+      }}>
+        <div style={{position:'absolute',inset:0,
+          background:'radial-gradient(circle at 18% 30%, rgba(200,21,10,0.24) 0%, rgba(0,0,0,0) 48%), radial-gradient(circle at 84% 82%, rgba(180,10,5,0.2) 0%, rgba(0,0,0,0) 45%), linear-gradient(135deg,#060303 0%,#0a0505 100%)'}}/>
+        <div style={{position:'absolute',inset:0,pointerEvents:'none',
+          background:'radial-gradient(circle, rgba(200,21,10,0.22) 1px, transparent 1px)',
+          backgroundSize:'12px 12px',opacity:0.17}}/>
+
+        <div style={{position:'relative',width:'100%',height:'100%',overflowY:'auto',
+          padding:'14px clamp(10px,2vw,24px) 22px'}}>
+          <div style={{display:'flex',gap:'clamp(10px,1.5vw,20px)',alignItems:'stretch',flexWrap:'wrap',minHeight:'100%'}}>
+            {/* Left decorative strip */}
+            <div style={{
+              flex:'0 1 clamp(120px,14vw,190px)',minWidth:120,
+              background:'linear-gradient(180deg,rgba(15,8,8,0.92) 0%,rgba(7,4,4,0.96) 100%)',
+              border:'2px solid rgba(255,255,255,0.8)',
+              boxShadow:'4px 4px 0 rgba(200,21,10,0.55)',
+              padding:'14px 10px',
+              display:'flex',flexDirection:'column',justifyContent:'space-between',
+              overflow:'hidden',position:'relative',
+            }}>
+              <img src="images/icons/icon1.png" style={{
+                position:'absolute',top:6,left:'50%',transform:'translateX(-50%)',
+                width:'90%',opacity:0.16,pointerEvents:'none',
+              }}/>
+              <div/>
+              <div style={{position:'relative',zIndex:1}}>
+                <div style={{
+                  fontFamily:"'Bebas Neue',sans-serif",
+                  fontSize:'clamp(24px,2.8vw,46px)',
+                  color:'white',letterSpacing:3,lineHeight:0.95,
+                  textShadow:'3px 3px 0 var(--red)',
+                }}>
+                  TAKE<br/>Y<span style={{color:'var(--red)'}}>O</span>UR<br/>HE<span style={{color:'var(--red)'}}>★</span>RT
+                </div>
+                <div style={{
+                  marginTop:8,paddingTop:7,
+                  borderTop:'1px solid rgba(200,21,10,0.38)',
+                  fontFamily:"'Noto Sans SC'",
+                  fontSize:11,color:'rgba(255,255,255,0.62)',lineHeight:1.6,
+                }}>在思考中构建，在记录中进化。</div>
+              </div>
+            </div>
+
+            {/* Main article paper */}
+            <div style={{flex:'1 1 620px',minWidth:'min(100%,420px)',display:'flex',flexDirection:'column',gap:10}}>
+              <div style={{display:'flex',alignItems:'center',gap:10,flexWrap:'wrap'}}>
+                <button onClick={onBack}
+                  style={{
+                    background:'#0b0909',
+                    border:'1px solid rgba(255,255,255,0.55)',
+                    color:'white',cursor:'pointer',
+                    padding:'5px 14px',
+                    fontFamily:"'Oswald',sans-serif",
+                    fontSize:13,letterSpacing:1.2,
+                    clipPath:'polygon(0 0,100% 0,95% 100%,0 100%)',
+                    boxShadow:'2px 2px 0 var(--red)',
+                  }}
+                  onMouseEnter={e=>{e.currentTarget.style.background='var(--red)';e.currentTarget.style.boxShadow='2px 2px 0 #0a0909'}}
+                  onMouseLeave={e=>{e.currentTarget.style.background='#0b0909';e.currentTarget.style.boxShadow='2px 2px 0 var(--red)'}}>
+                  ← BACK
+                </button>
+                <span style={{
+                  fontFamily:"'Oswald',sans-serif",fontWeight:700,fontStyle:'italic',
+                  fontSize:18,color:'rgba(255,255,255,0.92)',letterSpacing:2,
+                }}>{data.title}</span>
+                <span style={{
+                  fontFamily:"'Noto Sans SC'",fontSize:12,color:'white',
+                  background:'var(--red)',padding:'3px 10px',clipPath:'polygon(0 0,100% 0,94% 100%,0 100%)',
+                }}>{data.cn}</span>
+              </div>
+
+              <div style={{
+                position:'relative',
+                background:'#f4f2ee',
+                border:'4px solid #0a0909',
+                boxShadow:'8px 8px 0 var(--red)',
+                clipPath:'polygon(1% 0,99% 1.2%,100% 97%,2% 100%,0 3%)',
+                padding:'22px clamp(16px,2.2vw,32px) 28px',
+                minHeight:'calc(100% - 44px)',
+              }}>
+                <div style={{position:'absolute',top:18,right:20,
+                  fontFamily:"'Bebas Neue',sans-serif",fontSize:'clamp(68px,8vw,126px)',
+                  color:'rgba(0,0,0,0.06)',lineHeight:1,userSelect:'none'}}>★</div>
+                <div style={{position:'relative',zIndex:1}}>
+                  {data.content()}
+                </div>
+              </div>
+            </div>
+
+            {/* Right article sidebar */}
+            <Sidebar/>
+          </div>
+        </div>
+      </div>
+    );
+  }
+
+  return (
+    <div style={{
+      position:'fixed',inset:0,zIndex:50,
+      paddingTop:54,paddingBottom:44,
+      animation:'fadeIn 0.22s ease',
+    }}>
+      <div style={{
+        width:'100%',height:'100%',
+        display:'flex',flexDirection:'column',
+        background: darkMode ? 'rgba(6,2,2,0.96)' : 'rgba(240,228,225,0.98)',
+        overflow:'hidden',
+      }}>
+        {/* Header bar */}
+        <div style={{
+          flexShrink:0,padding:'14px 28px',
+          borderBottom:'1px solid rgba(200,21,10,0.3)',
+          display:'flex',alignItems:'center',gap:14,
+          background: darkMode ? 'rgba(8,3,3,0.85)' : 'rgba(240,228,225,0.92)',
+        }}>
+          <button onClick={onBack}
+            style={{
+              background:'none',border:'1px solid rgba(200,21,10,0.5)',
+              color:'rgba(200,21,10,0.8)',cursor:'pointer',
+              padding:'4px 12px',fontFamily:"'Oswald',sans-serif",
+              fontSize:12,letterSpacing:1,transition:'all 0.15s',flexShrink:0,
+            }}
+            onMouseEnter={e=>{e.currentTarget.style.background='var(--red)';e.currentTarget.style.color='white'}}
+            onMouseLeave={e=>{e.currentTarget.style.background='none';e.currentTarget.style.color='rgba(200,21,10,0.8)'}}>
+            ← BACK
+          </button>
+          <span style={{
+            fontFamily:"'Oswald',sans-serif",fontWeight:700,fontStyle:'italic',
+            fontSize:20,color:'white',letterSpacing:2,
+          }}>{data.title}</span>
+          <span style={{
+            fontFamily:"'Noto Sans SC'",fontSize:11,color:'rgba(200,21,10,0.9)',
+            background:'rgba(200,21,10,0.12)',padding:'2px 10px',border:'1px solid rgba(200,21,10,0.3)',
+          }}>{data.cn}</span>
+        </div>
+
+        <div style={{flex:1,overflowY:'auto',padding:'28px 48px',maxWidth:820}}>
+          {data.content()}
+        </div>
+      </div>
+    </div>
+  );
+};
+
+/* ========= FOOTER ========= */
+const Footer = ({ darkMode }) => {
+  const socials = [
+    { icon: NavIcons.github, href:'#', label:'GitHub' },
+    { icon: NavIcons.mail, href:'#', label:'Email' },
+    { icon: NavIcons.twitter, href:'#', label:'Twitter' },
+    { icon: NavIcons.linkedin, href:'#', label:'LinkedIn' },
+  ];
+  return (
+    <footer style={{
+      position:'fixed',bottom:0,left:0,right:0,zIndex:90,
+      height:44,display:'flex',alignItems:'center',justifyContent:'space-between',
+      padding:'0 32px',
+      background: darkMode ? 'rgba(5,1,1,0.92)' : 'rgba(240,228,225,0.95)',
+      borderTop:`1px solid rgba(200,21,10,0.25)`,
+      backdropFilter:'blur(8px)',
+    }}>
+      {/* Follow me */}
+      <div style={{display:'flex',alignItems:'center',gap:12}}>
+        <span style={{
+          fontFamily:"'Bebas Neue',sans-serif",fontSize:13,letterSpacing:3,
+          color: darkMode ? 'rgba(242,238,238,0.6)' : 'rgba(30,5,5,0.6)',
+        }}>FOLLOW ME</span>
+        <span style={{color:'var(--red)',fontFamily:"'Bebas Neue'",fontSize:14,letterSpacing:1}}>»»</span>
+        <div style={{display:'flex',gap:10}}>
+          {socials.map(s=>(
+            <a key={s.label} href={s.href}
+              style={{
+                color: darkMode ? 'rgba(242,238,238,0.5)' : 'rgba(30,5,5,0.5)',
+                display:'flex',transition:'all 0.15s',
+              }}
+              onMouseEnter={e=>e.currentTarget.style.color='var(--red)'}
+              onMouseLeave={e=>e.currentTarget.style.color= darkMode ? 'rgba(242,238,238,0.5)' : 'rgba(30,5,5,0.5)'}
+            >{s.icon}</a>
+          ))}
+        </div>
+      </div>
+      {/* Copyright */}
+      <div style={{
+        fontFamily:"'Noto Sans SC',sans-serif",fontSize:11,
+        color: darkMode ? 'rgba(242,238,238,0.35)' : 'rgba(30,5,5,0.4)',
+        display:'flex',alignItems:'center',gap:6,
+      }}>
+        © 2024 小柳飞刀
+        <span style={{color:'rgba(200,21,10,0.4)'}}>|</span>
+        用代码改变世界，用思考构建未来
+        <span style={{color:'var(--red)',fontSize:13}}>◆</span>
+      </div>
+    </footer>
+  );
+};
+
+/* ========= TWEAKS ========= */
+const TWEAK_DEFAULTS = /*EDITMODE-BEGIN*/{
+  "accentColor": "#c8150a",
+  "showCharacter": true,
+  "cardStyle": "sharp"
+}/*EDITMODE-END*/;
+
+const TweaksPanel = ({ visible, values, onChange }) => {
+  if(!visible) return null;
+  return (
+    <div style={{
+      position:'fixed',bottom:60,right:20,zIndex:300,
+      background:'rgba(10,3,3,0.96)',border:'1px solid rgba(200,21,10,0.5)',
+      padding:'16px 18px',width:240,
+      clipPath:'polygon(0 0,100% 0,98% 100%,2% 100%)',
+      boxShadow:'0 0 30px rgba(200,21,10,0.2)',
+    }}>
+      <div style={{fontFamily:"'Oswald',sans-serif",fontWeight:700,fontSize:14,
+        letterSpacing:3,color:'white',marginBottom:14,borderBottom:'1px solid rgba(200,21,10,0.3)',paddingBottom:8}}>
+        TWEAKS
+      </div>
+      <label style={{display:'flex',justifyContent:'space-between',alignItems:'center',
+        marginBottom:12,fontFamily:"'Noto Sans SC'",fontSize:12,color:'rgba(242,238,238,0.7)'}}>
+        显示角色占位
+        <input type="checkbox" checked={values.showCharacter}
+          onChange={e=>onChange({showCharacter:e.target.checked})}
+          style={{accentColor:'var(--red)',width:14,height:14}}/>
+      </label>
+      <label style={{display:'block',marginBottom:4,fontFamily:"'Noto Sans SC'",fontSize:12,color:'rgba(242,238,238,0.7)'}}>
+        强调色
+      </label>
+      <div style={{display:'flex',gap:8,marginBottom:12}}>
+        {['#c8150a','#0a88c8','#0ac85a','#c8a00a'].map(c=>(
+          <div key={c} onClick={()=>onChange({accentColor:c})}
+            style={{
+              width:24,height:24,background:c,cursor:'pointer',
+              border: values.accentColor===c ? '2px solid white' : '2px solid transparent',
+              transition:'border 0.1s',
+            }}/>
+        ))}
+      </div>
+      <label style={{display:'block',marginBottom:4,fontFamily:"'Noto Sans SC'",fontSize:12,color:'rgba(242,238,238,0.7)'}}>
+        卡片风格
+      </label>
+      <div style={{display:'flex',gap:6}}>
+        {['sharp','rounded'].map(s=>(
+          <button key={s} onClick={()=>onChange({cardStyle:s})}
+            style={{
+              flex:1,padding:'5px 0',fontFamily:"'Share Tech Mono'",fontSize:10,
+              background: values.cardStyle===s ? 'var(--red)' : 'transparent',
+              border:'1px solid rgba(200,21,10,0.4)',color:'white',cursor:'pointer',
+              transition:'all 0.15s',
+            }}>{s}</button>
+        ))}
+      </div>
+    </div>
+  );
+};
+
+/* ========= APP ========= */
+function App() {
+  const [page, setPage] = useState(()=>localStorage.getItem('p5r_page')||'home');
+  const [searchOpen, setSearchOpen] = useState(false);
+  const [darkMode, setDarkMode] = useState(()=>localStorage.getItem('p5r_dark')!=='false');
+  const [tweaksVisible, setTweaksVisible] = useState(false);
+  const [tweaks, setTweaks] = useState(TWEAK_DEFAULTS);
+
+  useEffect(()=>{
+    localStorage.setItem('p5r_page', page==='home'?'home':page);
+  },[page]);
+  useEffect(()=>{
+    localStorage.setItem('p5r_dark', darkMode);
+    document.documentElement.style.setProperty('--red', tweaks.accentColor);
+    document.documentElement.style.setProperty('--red2', tweaks.accentColor);
+  },[darkMode, tweaks.accentColor]);
+
+  // Tweaks message bridge
+  useEffect(()=>{
+    const handler = e => {
+      if(e.data?.type==='__activate_edit_mode') setTweaksVisible(true);
+      if(e.data?.type==='__deactivate_edit_mode') setTweaksVisible(false);
+    };
+    window.addEventListener('message', handler);
+    window.parent.postMessage({type:'__edit_mode_available'},'*');
+    return ()=>window.removeEventListener('message', handler);
+  },[]);
+
+  const updateTweaks = (delta) => {
+    const next = {...tweaks,...delta};
+    setTweaks(next);
+    window.parent.postMessage({type:'__edit_mode_set_keys',edits:next},'*');
+    if(delta.accentColor) document.documentElement.style.setProperty('--red', delta.accentColor);
+  };
+
+  const isHome = page==='home';
+
+  return (
+    <div style={{
+      width:'100vw',height:'100vh',overflow:'hidden',
+      background: darkMode ? 'var(--bg)' : '#f0e8e5',
+      color: darkMode ? 'var(--white)' : '#1a0505',
+    }}>
+      <Background darkMode={darkMode}/>
+      <NavBar currentPage={page} onNav={setPage} searchOpen={searchOpen}
+        setSearchOpen={setSearchOpen} darkMode={darkMode} setDarkMode={setDarkMode}/>
+
+      {isHome
+        ? <HomePage onNav={setPage} darkMode={darkMode} showChar={tweaks.showCharacter}/>
+        : <ContentPage pageId={page} onBack={()=>setPage('home')} darkMode={darkMode}/>
+      }
+
+      <Footer darkMode={darkMode}/>
+      {searchOpen && <SearchOverlay onClose={()=>setSearchOpen(false)} darkMode={darkMode}/>}
+      <TweaksPanel visible={tweaksVisible} values={tweaks} onChange={updateTweaks}/>
+    </div>
+  );
+}
+
+ReactDOM.createRoot(document.getElementById('root')).render(<App/>);
+</script>
+</body>
+</html>

@@ -1,0 +1,17 @@
+---
+import BaseLayout from './BaseLayout.astro';
+import SiteNav from '../components/SiteNav.astro';
+
+interface Props {
+  title?: string;
+  navActive?: 'home' | 'about' | 'timeline' | 'guestbook' | 'none';
+}
+
+const { title = '小柳飞刀 · Home', navActive = 'none' } = Astro.props as Props;
+---
+
+<BaseLayout title={title}>
+  <SiteNav active={navActive} />
+  <slot />
+  <footer class="site-footer">© 2026 小柳飞刀 · 用代码改变世界，用思考构建未来</footer>
+</BaseLayout>
