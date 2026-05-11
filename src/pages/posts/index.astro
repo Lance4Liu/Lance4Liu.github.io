@@ -1,96 +1,266 @@
 ---
-import HomeLayout from '../../layouts/HomeLayout.astro';
+import BaseLayout from '../../layouts/BaseLayout.astro';
+import SiteNav from '../../components/SiteNav.astro';
 import { getCollection } from 'astro:content';
 
-const categoryLabels = {
-  all: '全部文章',
-  tech: '学习笔记',
-  product: '产品思考',
-  diary: '产品测评'
+const categoryMeta = {
+  all: {
+    title: '文章目录',
+    label: '全部文章',
+    eyebrow: 'CATALOG',
+    description: '浏览全部文章记录，按最新发布时间排序。'
+  },
+  tech: {
+    title: '学习笔记',
+    label: '学习笔记',
+    eyebrow: 'AI NOTES',
+    description: '记录技术思考与学习笔记。'
+  },
+  product: {
+    title: '产品思考',
+    label: '产品思考',
+    eyebrow: 'PM THINKING',
+    description: '沉淀产品经验与商业逻辑。'
+  },
+  diary: {
+    title: '产品测评',
+    label: '产品测评',
+    eyebrow: 'AI TAKES',
+    description: '记录 AI 产品测评与实践。'
+  }
 } as const;
+
+type CategoryKey = keyof typeof categoryMeta;
+type PostCategory = Exclude<CategoryKey, 'all'>;
 
 const posts = (await getCollection('posts', ({ data }) => !data.draft)).sort(
   (a, b) => b.data.date.getTime() - a.data.date.getTime()
 );
 
-const counts = {
-  tech: posts.filter((post) => post.data.category === 'tech').length,
-  product: posts.filter((post) => post.data.category === 'product').length,
-  diary: posts.filter((post) => post.data.category === 'diary').length
-};
+const foodCovers = Array.from({ length: 9 }, (_, index) => `/images/icons/food${index + 1}.png`);
 ---
 
-<HomeLayout title="博客列表 · 小柳飞刀" navActive="timeline">
-  <main class="posts-page-wrap">
-    <h1 class="posts-heading">Posts</h1>
-    <p class="posts-intro">统一模板渲染，内容来自 Markdown。支持分类过滤与固定 URL 路由。</p>
+<BaseLayout title="文章目录 · 小柳飞刀" description="小柳飞刀的文章目录，收录学习笔记、产品思考与产品测评。">
+  <style is:global>
+    .site-bg {
+      background-image: url('/images/bg/splatter-bg2.png');
+      background-position: center center;
+    }
+  </style>
 
-    <nav class="filter-row" aria-label="category filters">
-      <a class="filter-btn" data-filter="all" href="/posts?category=all">{categoryLabels.all} ({posts.length})</a>
-      <a class="filter-btn" data-filter="tech" href="/posts?category=tech">{categoryLabels.tech} ({counts.tech})</a>
-      <a class="filter-btn" data-filter="product" href="/posts?category=product">{categoryLabels.product} ({counts.product})</a>
-      <a class="filter-btn" data-filter="diary" href="/posts?category=diary">{categoryLabels.diary} ({counts.diary})</a>
-    </nav>
+  <SiteNav active="timeline" />
 
-    <section class="posts-list" id="posts-list">
-      {
-        posts.map((post) => (
-          <article class="post-card" data-category={post.data.category}>
-            <a href={`/posts/${post.data.category}/${post.slug}`}>
-              <span class="post-chip"><span>{categoryLabels[post.data.category]}</span></span>
-              <h2 class="post-title">{post.data.title}</h2>
-              <p class="post-summary">{post.data.summary}</p>
-              <div class="post-meta">
-                <span>{post.data.date.toISOString().slice(0, 10)}</span>
-                <span>{post.data.readingTime ?? '5 分钟阅读'}</span>
-              </div>
-            </a>
-          </article>
-        ))
-      }
+  <main class="catalog-page" data-catalog-page>
+    <aside class="catalog-sidebar" aria-label="文章目录导航">
+      <a class="catalog-logo-link" href="/posts?category=all" data-filter="all" aria-label="显示全部文章">
+        <img class="catalog-logo" src="/images/logo/catalog.png" alt="文章目录 Catalog" />
+      </a>
+
+      <nav class="catalog-nav-panel" aria-label="文章分类">
+        <img class="catalog-nav-image" src="/images/buttons/Navigation.png" alt="" aria-hidden="true" />
+        <a
+          class="catalog-nav-hotspot catalog-nav-hotspot-tech"
+          href="/posts?category=tech"
+          data-filter="tech"
+          aria-label={`筛选${categoryMeta.tech.label}`}
+        >
+          <span class="catalog-sr-only">{categoryMeta.tech.label}</span>
+        </a>
+        <a
+          class="catalog-nav-hotspot catalog-nav-hotspot-product"
+          href="/posts?category=product"
+          data-filter="product"
+          aria-label={`筛选${categoryMeta.product.label}`}
+        >
+          <span class="catalog-sr-only">{categoryMeta.product.label}</span>
+        </a>
+        <a
+          class="catalog-nav-hotspot catalog-nav-hotspot-diary"
+          href="/posts?category=diary"
+          data-filter="diary"
+          aria-label={`筛选${categoryMeta.diary.label}`}
+        >
+          <span class="catalog-sr-only">{categoryMeta.diary.label}</span>
+        </a>
+      </nav>
+    </aside>
+
+    <section class="catalog-content" aria-labelledby="catalog-heading">
+      <header class="catalog-title-panel">
+        <img class="catalog-title-image" src="/images/buttons/NavigationTitle.png" alt="" aria-hidden="true" />
+        <div class="catalog-title-copy">
+          <div class="catalog-title-line">
+            <h1 id="catalog-heading" data-filter-title>{categoryMeta.all.title}</h1>
+            <span class="catalog-title-badge" data-filter-eyebrow>{categoryMeta.all.eyebrow}</span>
+          </div>
+          <p data-filter-description>{categoryMeta.all.description}</p>
+        </div>
+      </header>
+
+      <section class="catalog-post-list" id="posts-list" aria-live="polite">
+        {
+          posts.map((post, index) => {
+            const category = post.data.category as PostCategory;
+            const meta = categoryMeta[category];
+            const cover = foodCovers[index % foodCovers.length];
+            const tags = post.data.tags ?? [];
+
+            return (
+              <article class:list={['catalog-post-row', index % 2 === 1 && 'is-offset']} data-category={category}>
+                <a class="catalog-post-link" href={`/posts/${category}/${post.slug}`}>
+                  <span class="catalog-post-paper" aria-hidden="true"></span>
+                  <svg class="catalog-post-inkline" viewBox="0 0 1000 160" preserveAspectRatio="none" aria-hidden="true">
+                    <path d="M31 13 C141 6 224 14 334 10 C458 5 560 14 686 10 C810 5 887 12 953 11 L998 80 L953 152 C823 147 735 156 610 149 C469 142 348 156 218 148 C113 142 59 151 25 144 L3 80 Z" />
+                    <path class="catalog-post-inkline-jitter" d="M44 18 C168 12 259 21 370 16 C518 10 634 19 768 16 C849 14 912 17 940 18 M939 144 C810 139 717 149 591 142 C451 136 354 148 232 141 C136 136 73 144 36 138" />
+                  </svg>
+                  <div class="catalog-post-cover" aria-hidden="true">
+                    <img src={cover} alt="" loading="lazy" />
+                  </div>
+
+                  <div class="catalog-post-main">
+                    <span class="catalog-post-chip">{meta.label}</span>
+                    <h2>{post.data.title}</h2>
+                    <p>{post.data.summary}</p>
+                    {
+                      tags.length > 0 && (
+                        <div class="catalog-post-tags" aria-label="文章标签">
+                          {tags.slice(0, 3).map((tag) => (
+                            <span>{tag}</span>
+                          ))}
+                        </div>
+                      )
+                    }
+                  </div>
+
+                  <div class="catalog-post-meta">
+                    <span class="catalog-post-date">{post.data.date.toISOString().slice(0, 10)}</span>
+                    <span class="catalog-post-time">{post.data.readingTime ?? '5 分钟阅读'}</span>
+                  </div>
+
+                  <span class="catalog-post-star" aria-hidden="true">✦</span>
+                </a>
+              </article>
+            );
+          })
+        }
+      </section>
     </section>
   </main>
 
   <script is:inline>
     (() => {
-      const cards = Array.from(document.querySelectorAll('[data-category]'));
-      const buttons = Array.from(document.querySelectorAll('[data-filter]'));
-      const articleLinks = Array.from(document.querySelectorAll('.post-card > a'));
+      const page = document.querySelector('[data-catalog-page]');
+      if (!page) return;
+
+      const cards = Array.from(page.querySelectorAll('[data-category]'));
+      const filterLinks = Array.from(page.querySelectorAll('[data-filter]'));
+      const articleLinks = Array.from(page.querySelectorAll('.catalog-post-link'));
+      const title = page.querySelector('[data-filter-title]');
+      const eyebrow = page.querySelector('[data-filter-eyebrow]');
+      const description = page.querySelector('[data-filter-description]');
       const params = new URLSearchParams(window.location.search);
-      const initial = params.get('category') || 'all';
+      const validFilters = ['all', 'tech', 'product', 'diary'];
+
+      const meta = {
+        all: {
+          title: '文章目录',
+          eyebrow: 'CATALOG',
+          description: '浏览全部文章记录，按最新发布时间排序。'
+        },
+        tech: {
+          title: '学习笔记',
+          eyebrow: 'AI NOTES',
+          description: '记录技术思考与学习笔记。'
+        },
+        product: {
+          title: '产品思考',
+          eyebrow: 'PM THINKING',
+          description: '沉淀产品经验与商业逻辑。'
+        },
+        diary: {
+          title: '产品测评',
+          eyebrow: 'AI TAKES',
+          description: '记录 AI 产品测评与实践。'
+        }
+      };
 
       const clickSound = new Audio('/sounds/click.wav');
+      const hoverSound = new Audio('/sounds/select.wav');
       clickSound.preload = 'auto';
+      hoverSound.preload = 'auto';
       clickSound.volume = 0.8;
+      hoverSound.volume = 0.7;
 
-      const playClick = () => {
+      const play = (audio) => {
         try {
-          clickSound.currentTime = 0;
-          const promise = clickSound.play();
+          audio.currentTime = 0;
+          const promise = audio.play();
           if (promise && typeof promise.catch === 'function') {
             promise.catch(() => {});
           }
         } catch {}
       };
 
-      function apply(filter) {
+      const normalizeFilter = (filter) => (validFilters.includes(filter) ? filter : 'all');
+
+      function apply(filter, updateUrl = false) {
+        const nextFilter = normalizeFilter(filter);
+
         cards.forEach((card) => {
           const category = card.getAttribute('data-category');
-          const visible = filter === 'all' || filter === category;
-          card.style.display = visible ? '' : 'none';
+          const visible = nextFilter === 'all' || nextFilter === category;
+          card.hidden = !visible;
         });
 
-        buttons.forEach((btn) => {
-          const active = btn.getAttribute('data-filter') === filter;
-          btn.classList.toggle('active', active);
+        filterLinks.forEach((link) => {
+          const active = link.getAttribute('data-filter') === nextFilter;
+          link.classList.toggle('active', active);
+          if (active) {
+            link.setAttribute('aria-current', 'true');
+          } else {
+            link.removeAttribute('aria-current');
+          }
         });
+
+        if (title) title.textContent = meta[nextFilter].title;
+        if (eyebrow) eyebrow.textContent = meta[nextFilter].eyebrow;
+        if (description) description.textContent = meta[nextFilter].description;
+        document.title = `${meta[nextFilter].title} · 小柳飞刀`;
+
+        if (updateUrl) {
+          const url = new URL(window.location.href);
+          url.searchParams.set('category', nextFilter);
+          window.history.pushState({ category: nextFilter }, '', url);
+        }
       }
 
-      apply(initial);
+      apply(normalizeFilter(params.get('category') || 'all'));
+
+      filterLinks.forEach((link) => {
+        link.addEventListener('mouseenter', () => {
+          play(hoverSound);
+        });
+
+        link.addEventListener('click', (event) => {
+          const filter = link.getAttribute('data-filter') || 'all';
+          const isPrimaryClick = event.button === 0;
+          const hasModifier = event.metaKey || event.ctrlKey || event.shiftKey || event.altKey;
+
+          play(clickSound);
+          if (!isPrimaryClick || hasModifier) return;
+
+          event.preventDefault();
+          apply(filter, true);
+        });
+      });
 
       articleLinks.forEach((link) => {
+        link.addEventListener('mouseenter', () => {
+          play(hoverSound);
+        });
+
         link.addEventListener('click', (event) => {
-          playClick();
+          play(clickSound);
 
           const href = link.getAttribute('href');
           const isPrimaryClick = event.button === 0;
@@ -104,6 +274,11 @@ const counts = {
           }, 80);
         });
       });
+
+      window.addEventListener('popstate', () => {
+        const nextParams = new URLSearchParams(window.location.search);
+        apply(normalizeFilter(nextParams.get('category') || 'all'));
+      });
     })();
   </script>
-</HomeLayout>
+</BaseLayout>
